@@ -1,5 +1,5 @@
 {
-  "name": "fynn",
+  "name": "oinc",
   "private": true,
   "workspaces": [
     "apps/*",

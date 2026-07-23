@@ -1,1 +1,1 @@
-CREATE DATABASE fynn_test;
+CREATE DATABASE oinc_test;

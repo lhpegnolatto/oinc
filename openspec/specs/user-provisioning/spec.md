@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Fynn provisions per-user defaults through a `modules/users` seed command
+oinc provisions per-user defaults through a `modules/users` seed command
 triggered by `shared/auth`'s user-creation hook, keeping `shared/auth` free of
 direct dependencies on domain modules. This capability covers the trigger and
 wiring for that seed command; it does not (yet) cover seeding real domain

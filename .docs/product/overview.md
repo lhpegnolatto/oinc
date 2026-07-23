@@ -1,6 +1,6 @@
 # Product — Overview
 
-This directory is the source of truth for *why* Fynn exists and *what* it's for — the
+This directory is the source of truth for *why* oinc exists and *what* it's for — the
 product counterpart to [.docs/architecture/](../architecture/overview.md), which covers
 *how* it's built. It exists so that every OpenSpec proposal makes scope and UX decisions
 consistent with what's written here, instead of re-deriving (or drifting from) product
@@ -19,7 +19,7 @@ afterward — see [Keeping this documentation authoritative](#keeping-this-docum
 
 ## Vision
 
-Fynn is a personal finance app that helps someone answer one question at a glance:
+oinc is a personal finance app that helps someone answer one question at a glance:
 *where is my money going, and what do I have?* It covers wallets, transactions, credit
 cards, and investments as one connected picture, without asking the user to become a
 bookkeeper to use it.
@@ -30,7 +30,7 @@ Most people don't have a spending or net-worth problem — they have a *visibili
 problem. Money moves across a wallet, a couple of credit cards, and maybe a brokerage
 account, and none of it is in one place. The tools that do aggregate it (spreadsheets,
 full accounting suites) cost more effort to maintain than the insight is worth, so people
-give up after a week. Fynn's bet is that if logging and reviewing money takes seconds,
+give up after a week. oinc's bet is that if logging and reviewing money takes seconds,
 people will actually keep doing it.
 
 ## Target user
@@ -66,7 +66,7 @@ list is not meant to speculatively grow ahead of what's actually being built.
 
 ### Simple, not comprehensive
 
-Fynn is not trying to become a full accounting system. Every feature decision should be
+oinc is not trying to become a full accounting system. Every feature decision should be
 weighed against: *does this help an individual understand and organize their own money,
 or does it add bookkeeping-grade complexity for a case we don't need to serve?* When in
 doubt, cut scope rather than add a configuration option to cover an edge case.
@@ -75,7 +75,7 @@ doubt, cut scope rather than add a configuration option to cover an edge case.
 
 Because logging a transaction is the highest-frequency action in the app, the time it
 takes to do that (and other common actions) directly determines whether people keep
-using Fynn. Speed is treated as a hard product requirement, not a later optimization
+using oinc. Speed is treated as a hard product requirement, not a later optimization
 pass, and it applies on both keyboard and touch/mobile screens:
 
 - **Keyboard**: every frequent action should have a shortcut, and shortcuts should be

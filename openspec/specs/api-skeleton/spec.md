@@ -2,7 +2,7 @@
 
 ## Purpose
 
-`apps/api` is Fynn's backend: a Hono application running on Bun, providing a
+`apps/api` is oinc's backend: a Hono application running on Bun, providing a
 typed HTTP contract for `apps/web` and connecting to PostgreSQL via Drizzle.
 This capability covers the skeleton — app bootstrapping, typed contract
 export, database connectivity, uniform error handling, and the module folder
@@ -30,7 +30,7 @@ consume it for compile-time type inference, with no runtime coupling.
 
 ### Requirement: Postgres connectivity via Drizzle
 `apps/api` SHALL connect to PostgreSQL through a Drizzle client configured via
-`drizzle-kit`, using `DATABASE_URL` from `@fynn/env`.
+`drizzle-kit`, using `DATABASE_URL` from `@oinc/env`.
 
 #### Scenario: App connects to local Postgres
 - **WHEN** the local `docker-compose` Postgres service is running and `apps/api`

@@ -1,5 +1,5 @@
 {
-  "name": "@fynn/web",
+  "name": "@oinc/web",
   "version": "0.0.0",
   "type": "module",
   "private": true,
@@ -29,7 +29,7 @@
     "zod": "^4.4.3"
   },
   "devDependencies": {
-    "@fynn/api": "workspace:*",
+    "@oinc/api": "workspace:*",
     "@tailwindcss/postcss": "^4",
     "@types/bun": "^1.3.14",
     "@types/node": "^20",

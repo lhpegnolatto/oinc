@@ -1,4 +1,4 @@
-import type { AppType } from "@fynn/api";
+import type { AppType } from "@oinc/api";
 import { hc } from "hono/client";
 import { env } from "@/env";
 

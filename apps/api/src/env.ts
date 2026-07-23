@@ -1,4 +1,4 @@
-import { dbEnv } from "@fynn/env/server";
+import { dbEnv } from "@oinc/env/server";
 import { createEnv } from "@t3-oss/env-core";
 import * as z from "zod";
 

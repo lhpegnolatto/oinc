@@ -11,7 +11,7 @@ context: |
   their content here; this block only lists the constraints that must never be silently
   violated.
 
-  - Fynn is a personal finance app (wallets, transactions, credit cards, investments)
+  - oinc is a personal finance app (wallets, transactions, credit cards, investments)
     optimized for being simple and fast, not a full accounting system — see
     .docs/product/overview.md for non-goals before adding scope.
   - Any new frequent user action (e.g. logging a transaction) must have both a keyboard
@@ -24,7 +24,7 @@ context: |
   - web: business logic lives in src/modules/<name>/, the app/ folder is routing only,
     split into app/(public)/ and app/(private)/ route groups (private layout asserts
     a session). Components use named exports and kebab-case file names, built with
-    shadcn/ui (new-york style) per its design conventions.
+    shadcn/ui (base-nova style) per its design conventions.
   - api: modular + Clean Architecture + CQRS. Folders per module: controllers,
     commands (writes), queries (reads), repositories, domain, schemas. Modules never
     import another module's repositories/commands/domain directly. Routes are public

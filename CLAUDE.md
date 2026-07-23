@@ -1,7 +1,7 @@
-# Fynn
+# oinc
 
 Turborepo monorepo (Bun runtime/package manager/test runner): `apps/web` (Next.js App
-Router) + `apps/api` (Bun + Hono), plus `packages/*` shared packages (`@fynn/env`).
+Router) + `apps/api` (Bun + Hono), plus `packages/*` shared packages (`@oinc/env`).
 
 Full tech-stack decisions live in `.docs/architecture/`, split by concern — read
 whichever is relevant before touching that area:
@@ -19,11 +19,11 @@ new features.
 - `web`: business logic in `src/modules/<name>/`, `app/` is routing only, split into
   `(public)`/`(private)` route groups. `api`: modular + Clean Architecture + CQRS —
   modules never import another module's `repositories/`/`commands/`/`domain/` directly.
-- Fynn is simple/fast personal finance, not a full accounting system — a new frequent
+- oinc is simple/fast personal finance, not a full accounting system — a new frequent
   user action needs a keyboard shortcut and a low-friction screen interaction (e.g. a
   sheet, not a page nav); see `.docs/product/overview.md`.
 - Auth is Better Auth, **Google sign-on only** — `emailAndPassword` stays disabled.
-- Never read `process.env` directly — go through `@fynn/env`.
+- Never read `process.env` directly — go through `@oinc/env`.
 - API errors always go through `shared/errors`, shaped as `{ error: { code, message, details } }`.
 - Every FK / filtered / sorted / unique column needs a matching Drizzle index.
 - Tests (`bun test`) are written around real use cases, never for coverage padding.

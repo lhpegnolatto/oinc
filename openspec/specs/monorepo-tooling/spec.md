@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Defines the shared tooling foundation for the Fynn monorepo: Bun workspaces
+Defines the shared tooling foundation for the oinc monorepo: Bun workspaces
 for dependency management, Turborepo for task orchestration, Biome as the
 sole linter/formatter, and a pinned package manager version for reproducible
 installs.

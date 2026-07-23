@@ -1,13 +1,4 @@
-# env-config
-
-## Purpose
-
-`@oinc/env` is the single source of truth for environment variable
-validation across the monorepo. It ensures every app fails fast on missing
-configuration and prevents `process.env` from being read directly anywhere
-else in the codebase.
-
-## Requirements
+## MODIFIED Requirements
 
 ### Requirement: Centralized environment variable validation
 `@oinc/env` SHALL be the single package that defines and validates environment

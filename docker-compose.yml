@@ -3,9 +3,9 @@ services:
     image: postgres:17-alpine
     restart: unless-stopped
     environment:
-      POSTGRES_USER: fynn
-      POSTGRES_PASSWORD: fynn
-      POSTGRES_DB: fynn_dev
+      POSTGRES_USER: oinc
+      POSTGRES_PASSWORD: oinc
+      POSTGRES_DB: oinc_dev
     ports:
       - "5432:5432"
     volumes:

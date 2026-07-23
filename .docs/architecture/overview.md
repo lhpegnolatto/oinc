@@ -1,10 +1,10 @@
 # Architecture — Overview
 
-This directory is the source of truth for Fynn's architecture and technology choices. It exists so that every OpenSpec change — proposal, design, and implementation — makes decisions that are consistent with what's written here, instead of re-deriving (or drifting from) the stack change by change.
+This directory is the source of truth for oinc's architecture and technology choices. It exists so that every OpenSpec change — proposal, design, and implementation — makes decisions that are consistent with what's written here, instead of re-deriving (or drifting from) the stack change by change.
 
 It's split by concern so a change only needs to load what's relevant instead of one large document:
 
-- **overview.md** (this file) — monorepo shape, Turborepo/Biome/Bun tooling, shared packages (`@fynn/env`).
+- **overview.md** (this file) — monorepo shape, Turborepo/Biome/Bun tooling, shared packages (`@oinc/env`).
 - **[frontend.md](frontend.md)** — `apps/web` (Next.js, routing, components, Hono RPC client).
 - **[backend.md](backend.md)** — `apps/api` (Hono, modules, CQRS, error contract, Drizzle/Postgres).
 - **[testing.md](testing.md)** — testing philosophy and conventions, applies to both apps.
@@ -13,21 +13,21 @@ If a change needs to deviate from any of these, the deviation must be called out
 
 ## Overview
 
-Fynn is a **Turborepo monorepo** managed with **Bun**, containing two apps and a set of shared packages:
+oinc is a **Turborepo monorepo** managed with **Bun**, containing two apps and a set of shared packages:
 
 ```
-fynn/
+oinc/
 ├── apps/
 │   ├── web/            # Next.js frontend
 │   └── api/             # Hono backend API
 ├── packages/
-│   ├── env/              # @fynn/env — shared t3-env schemas (client + server)
+│   ├── env/              # @oinc/env — shared t3-env schemas (client + server)
 │   └── ...               # future shared packages (ui, config, etc.) follow the same pattern
 ├── turbo.json
 └── package.json
 ```
 
-Both apps are TypeScript-first, share environment-variable validation through `@fynn/env`, and are built/tested/linted through Turborepo pipelines so that `turbo run build|test|lint` fans out correctly across the graph and caches per-package outputs.
+Both apps are TypeScript-first, share environment-variable validation through `@oinc/env`, and are built/tested/linted through Turborepo pipelines so that `turbo run build|test|lint` fans out correctly across the graph and caches per-package outputs.
 
 ---
 
@@ -130,7 +130,7 @@ export const dbEnv = createEnv({
 // apps/api/src/env.ts
 import { createEnv } from "@t3-oss/env-core";
 import { z } from "zod";
-import { dbEnv } from "@fynn/env/server";
+import { dbEnv } from "@oinc/env/server";
 
 export const env = createEnv({
   server: {

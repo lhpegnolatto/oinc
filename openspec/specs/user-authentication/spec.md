@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Fynn authenticates users via Better Auth, configured for Google OAuth only.
+oinc authenticates users via Better Auth, configured for Google OAuth only.
 This capability covers `apps/api` issuing and validating sessions, the
 cross-origin session cookie shared between `apps/web` and `apps/api`, the
 `requireAuth` middleware that makes routes opt-in guarded (public by default),

@@ -16,7 +16,7 @@ This has a direct consequence for OpenSpec: **every change's `tasks.md` must inc
 
 Use-case tests for commands/queries go through Drizzle to a **real Postgres**, not a mock — mocking the database is exactly the kind of test that passes while the real query is broken, which contradicts the "test real flows" rule above. The approach:
 
-- The same `docker-compose` Postgres used for local dev gets a second database, e.g. `fynn_test` (same container, no extra infra). `DATABASE_URL` for `bun test` points at it.
+- The same `docker-compose` Postgres used for local dev gets a second database, e.g. `oinc_test` (same container, no extra infra). `DATABASE_URL` for `bun test` points at it.
 - **Isolation is per-test transaction rollback, not truncation.** Each test begins a transaction before it runs and rolls it back after, so tests never see each other's data and can run concurrently without truncation races. This is faster than `TRUNCATE`-between-tests and doesn't require any cross-test ordering.
 - This requires repositories to receive their Drizzle client/transaction rather than importing a module-level singleton — a repository constructor takes a `db` handle, and tests pass in the per-test transaction instead of the real pooled client. This is the same seam commands need anyway for atomic multi-repository writes (e.g. "create a project and its default settings row in one transaction"), so it's not test-only ceremony.
 
@@ -48,8 +48,8 @@ import { createProject } from "./create-project";
 test("a signed-in user can create a project", async () => {
   await withTestTransaction(async (tx) => {
     const repo = new ProjectsRepository(tx);
-    const project = await createProject(repo, { name: "Fynn", ownerId: "user_1" });
-    expect(project.name).toBe("Fynn");
+    const project = await createProject(repo, { name: "Acme Corp", ownerId: "user_1" });
+    expect(project.name).toBe("Acme Corp");
   });
 });
 ```

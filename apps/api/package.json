@@ -1,5 +1,5 @@
 {
-  "name": "@fynn/api",
+  "name": "@oinc/api",
   "version": "0.0.0",
   "private": true,
   "type": "module",
@@ -15,7 +15,7 @@
     "check-types": "tsc --noEmit"
   },
   "dependencies": {
-    "@fynn/env": "workspace:*",
+    "@oinc/env": "workspace:*",
     "@t3-oss/env-core": "^0.13.11",
     "better-auth": "^1.6.24",
     "drizzle-orm": "^0.45.2",

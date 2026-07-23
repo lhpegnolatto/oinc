@@ -10,7 +10,7 @@ Part of [.docs/architecture/](overview.md) — see [overview.md](overview.md) fo
 | Schema/validation | Zod |
 | Forms | React Hook Form (+ `@hookform/resolvers/zod`) |
 | Server state | TanStack Query |
-| Env | `@fynn/env` (`@t3-oss/env-nextjs`) |
+| Env | `@oinc/env` (`@t3-oss/env-nextjs`) |
 
 ## Routing vs. logic split
 
@@ -65,7 +65,7 @@ export type AppType = typeof app;
 ```ts
 // apps/web/src/modules/projects/api.ts
 import { hc } from "hono/client";
-import type { AppType } from "@fynn/api";
+import type { AppType } from "@oinc/api";
 
 const client = hc<AppType>(env.NEXT_PUBLIC_API_URL);
 
@@ -84,13 +84,13 @@ export async function fetchProjects() {
 - **kebab-case file names** — e.g. `project-card.tsx`, `use-project-query.ts`, matching shadcn/ui's own file naming so generated components don't stand out from hand-written ones.
 - Pages and components follow shadcn/ui's design conventions (composition over configuration, `cn()` for conditional classes, variants via `class-variance-authority` where shadcn generates them that way) — the [shadcn skill](../../.claude/skills/shadcn/SKILL.md) installed in this repo should be used to add/scaffold components rather than hand-rolling primitives that already exist in the registry.
 
-> **Design-system constraint:** all page and component design in `apps/web` MUST follow shadcn/ui patterns — compose from `components/ui` primitives (or the underlying base-ui/Radix primitives shadcn wraps) instead of hand-rolling equivalents, and match the existing `new-york`-style visual language (spacing, radius, variant conventions) so hand-written UI is indistinguishable from generated UI. Any work that adds, modifies, or scaffolds a component or page MUST go through the [shadcn skill](../../.claude/skills/shadcn/SKILL.md) rather than writing markup from scratch or pulling in another component library.
+> **Design-system constraint:** all page and component design in `apps/web` MUST follow shadcn/ui patterns — compose from `components/ui` primitives (or the underlying base-ui/Radix primitives shadcn wraps) instead of hand-rolling equivalents, and match the existing `base-nova`-style visual language (spacing, radius, variant conventions) so hand-written UI is indistinguishable from generated UI. Any work that adds, modifies, or scaffolds a component or page MUST go through the [shadcn skill](../../.claude/skills/shadcn/SKILL.md) rather than writing markup from scratch or pulling in another component library.
 
 ## shadcn/ui configuration
 
 The shadcn CLI replaced the old `style: "new-york"` / `--base-color` flags with a
 named-preset system (`nova`, `vega`, `maia`, `lyra`, `mira`, `luma`) plus a `--base`
-flag selecting the primitive library (`radix`, `base`, `aria`). Fynn uses the `nova`
+flag selecting the primitive library (`radix`, `base`, `aria`). oinc uses the `nova`
 preset with `base` (base-ui) primitives — `nova`'s default base color already
 resolves to `neutral`, matching the original decision below. Scaffold/reinitialize
 with `npx shadcn@latest init --template next --base base --preset nova`.
