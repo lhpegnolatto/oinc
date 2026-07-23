@@ -1,1 +1,6 @@
-export { ApiError, NotFoundError, ValidationError } from "./api-error";
+export {
+  ApiError,
+  NotFoundError,
+  UnauthorizedError,
+  ValidationError,
+} from "./api-error";

@@ -25,7 +25,8 @@ apps/api/src/
 │   ├── app.ts              # creates the Hono app, wires global middleware, mounts module routers, exports AppType
 │   └── routes.ts           # aggregates each module's router via app.route('/x', moduleRouter)
 ├── modules/
-│   └── <module-name>/
+│   └── <module-name>/            # e.g. wallets, transactions, users — examples, not
+│                                  # an exhaustive/closed set (see product/overview.md)
 │       ├── controllers/     # Hono route handlers — parse/validate input, call a command/query, shape the response
 │       ├── commands/        # write use cases (CQRS "C") — one class/function per state-changing use case
 │       ├── queries/          # read use cases (CQRS "Q") — one per read use case, can bypass the domain model for performance
@@ -49,7 +50,9 @@ apps/api/src/
 // shared/auth/index.ts
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
-import { db } from "../db";
+import { env } from "../../env";
+import { seedNewUserDefaults } from "../../modules/users/commands/seed-new-user-defaults";
+import { db } from "../db/client";
 
 export const auth = betterAuth({
   database: drizzleAdapter(db, { provider: "pg" }),
@@ -60,12 +63,38 @@ export const auth = betterAuth({
       clientSecret: env.GOOGLE_CLIENT_SECRET,
     },
   },
+  secret: env.BETTER_AUTH_SECRET,
+  trustedOrigins: [env.WEB_APP_URL],
+  advanced: {
+    // apps/web calls apps/api directly (no proxy) — this cookie is always
+    // cross-origin, so sameSite: "none" is required for it to be sent at all.
+    // Chrome treats localhost as trustworthy, so secure: true still works in
+    // dev over plain HTTP. Production's exact attributes depend on final
+    // domain topology — see this change's design.md Open Questions.
+    defaultCookieAttributes: {
+      sameSite: "none",
+      secure: true,
+    },
+  },
+  // The only outward call shared/auth makes — everything about what happens
+  // in the product when a user is created lives in modules/users, not here.
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          await seedNewUserDefaults(user.id);
+        },
+      },
+    },
+  },
 });
 ```
 
 ```ts
 // app/app.ts
 import { Hono } from "hono";
+import { cors } from "hono/cors";
+import { env } from "../env";
 import { auth } from "../shared/auth";
 import { registerRoutes } from "./routes";
 
@@ -78,15 +107,28 @@ type Env = {
 
 export const app = new Hono<Env>();
 
-// Runs on every request: attaches user/session if present, but does not block.
+// Browser calls apps/api directly from apps/web's origin — every credentialed
+// request (auth endpoints, any requireAuth-guarded route) needs an explicit
+// origin here, never "*", per the Fetch spec's credentialed-request rules.
+app.use(
+  "*",
+  cors({
+    origin: env.WEB_APP_URL,
+    allowHeaders: ["Content-Type", "Authorization"],
+    allowMethods: ["POST", "GET", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    credentials: true,
+  }),
+);
+
+app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
+
+// Runs on every request: attaches user/session if present, but never blocks.
 app.use("*", async (c, next) => {
   const session = await auth.api.getSession({ headers: c.req.raw.headers });
   c.set("user", session?.user ?? null);
   c.set("session", session?.session ?? null);
   await next();
 });
-
-app.on(["POST", "GET"], "/api/auth/*", (c) => auth.handler(c.req.raw));
 
 registerRoutes(app);
 
@@ -98,11 +140,12 @@ export type AppType = typeof app;
 // shared/auth/require-auth.ts
 import { createMiddleware } from "hono/factory";
 import type { Env } from "../../app/app";
+import { UnauthorizedError } from "../errors";
 
 // Routes are public by default; apply this explicitly to guard a route/router.
 export const requireAuth = createMiddleware<Env>(async (c, next) => {
   if (!c.get("user")) {
-    return c.json({ error: { code: "UNAUTHORIZED", message: "Sign-in required", details: [] } }, 401);
+    throw new UnauthorizedError();
   }
   await next();
 });

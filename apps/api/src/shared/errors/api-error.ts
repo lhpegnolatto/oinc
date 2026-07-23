@@ -20,3 +20,9 @@ export class ValidationError extends ApiError {
     super(400, "VALIDATION_ERROR", message, details);
   }
 }
+
+export class UnauthorizedError extends ApiError {
+  constructor(message = "Sign-in required") {
+    super(401, "UNAUTHORIZED", message);
+  }
+}

@@ -41,9 +41,13 @@ in control of their money, and no more.
 
 ## Core domains
 
-These are the four pillars of the product, and map directly to the module boundaries
-described in [backend.md](../architecture/backend.md) (`apps/api/src/modules/*`) and
-[frontend.md](../architecture/frontend.md) (`apps/web/src/modules/*`):
+These are the four current pillars of the product — examples of the product-facing
+domains, not an exhaustive or closed set of every module the codebase will ever have
+(e.g. `modules/users`, which owns account/session-lifecycle concerns rather than a
+product pillar, already exists alongside them). They map directly to the module
+boundaries described in [backend.md](../architecture/backend.md)
+(`apps/api/src/modules/*`) and [frontend.md](../architecture/frontend.md)
+(`apps/web/src/modules/*`):
 
 - **Wallets** — where money physically/virtually sits (cash, bank accounts). The
   starting point for a user's net worth.
