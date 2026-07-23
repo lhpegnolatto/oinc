@@ -6,7 +6,7 @@ Part of [.docs/architecture/](overview.md) — see [overview.md](overview.md) fo
 |---|---|
 | Framework | Next.js (App Router, `src/` directory) |
 | Styling | Tailwind CSS |
-| Components | shadcn/ui — `new-york` style, base-ui primitives |
+| Components | shadcn/ui — `nova` preset, base-ui primitives |
 | Schema/validation | Zod |
 | Forms | React Hook Form (+ `@hookform/resolvers/zod`) |
 | Server state | TanStack Query |
@@ -88,15 +88,21 @@ export async function fetchProjects() {
 
 ## shadcn/ui configuration
 
+The shadcn CLI replaced the old `style: "new-york"` / `--base-color` flags with a
+named-preset system (`nova`, `vega`, `maia`, `lyra`, `mira`, `luma`) plus a `--base`
+flag selecting the primitive library (`radix`, `base`, `aria`). Fynn uses the `nova`
+preset with `base` (base-ui) primitives — `nova`'s default base color already
+resolves to `neutral`, matching the original decision below. Scaffold/reinitialize
+with `npx shadcn@latest init --template next --base base --preset nova`.
+
 ```json
 // apps/web/components.json
 {
   "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "new-york",
+  "style": "base-nova",
   "rsc": true,
   "tsx": true,
   "tailwind": {
-    "config": "tailwind.config.ts",
     "css": "src/app/globals.css",
     "baseColor": "neutral",
     "cssVariables": true
@@ -111,5 +117,3 @@ export async function fetchProjects() {
   "iconLibrary": "lucide"
 }
 ```
-
-`baseColor` is a placeholder above (`neutral`) — pick the actual base color (`zinc`, `slate`, `neutral`, `gray`, `stone`) when the design direction is decided; it only affects the generated CSS variable palette, not component behavior, but it's a one-way choice via the CLI so it's worth deciding deliberately rather than defaulting.

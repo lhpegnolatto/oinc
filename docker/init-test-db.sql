@@ -1,0 +1,1 @@
+CREATE DATABASE fynn_test;
