@@ -1,0 +1,73 @@
+schema: spec-driven
+
+# Project context (optional)
+# This is shown to AI when creating artifacts.
+context: |
+  Full tech stack and architecture decisions live in .docs/architecture/, split by
+  concern — read the ones relevant to this change before writing a proposal, design,
+  or tasks: overview.md (monorepo/tooling/shared packages), frontend.md (apps/web),
+  backend.md (apps/api), testing.md (both apps). Product vision, scope, and non-goals
+  live in .docs/product/overview.md — read it before scoping a proposal. Do not repeat
+  their content here; this block only lists the constraints that must never be silently
+  violated.
+
+  - Fynn is a personal finance app (wallets, transactions, credit cards, investments)
+    optimized for being simple and fast, not a full accounting system — see
+    .docs/product/overview.md for non-goals before adding scope.
+  - Any new frequent user action (e.g. logging a transaction) must have both a keyboard
+    shortcut and a low-friction screen interaction (e.g. a sheet, not a page
+    navigation) — see "Fast is a feature" in .docs/product/overview.md.
+
+  - Turborepo monorepo, Bun (runtime/package manager/test runner). apps/web (Next.js
+    App Router, src dir), apps/api (Bun + Hono). packages/env unifies env vars via
+    @t3-oss/env-core / env-nextjs — never read process.env directly in app code.
+  - web: business logic lives in src/modules/<name>/, the app/ folder is routing only,
+    split into app/(public)/ and app/(private)/ route groups (private layout asserts
+    a session). Components use named exports and kebab-case file names, built with
+    shadcn/ui (new-york style) per its design conventions.
+  - api: modular + Clean Architecture + CQRS. Folders per module: controllers,
+    commands (writes), queries (reads), repositories, domain, schemas. Modules never
+    import another module's repositories/commands/domain directly. Routes are public
+    by default; apply the requireAuth middleware explicitly to guard a router/route.
+  - Auth is Better Auth, Google sign-on only — emailAndPassword must stay disabled.
+  - apps/api exports its Hono AppType; apps/web consumes it via Hono's `hc` RPC
+    client (workspace type-only dependency) instead of hand-written fetchers or
+    duplicated Zod schemas — see "Web ↔ API type safety" in frontend.md.
+  - All API errors go through shared/errors and come back as
+    { error: { code, message, details } } — never hand-build an error JSON body
+    in a controller.
+  - Linting/formatting is Biome everywhere (root biome.json, package configs use
+    "extends": "//") — no ESLint or Prettier config should exist in the repo.
+  - No CI yet (deliberate, revisit once there are multiple contributors) — run
+    `bun run lint && bun test && bun run build` locally before calling a change done.
+  - When implementing apps/api work, use the backend-patterns skill for the
+    patterns underneath the module shape (error handling, N+1 prevention, caching,
+    rate limiting, RBAC, logging) — translate its generic examples into this repo's
+    controllers/commands/queries/repositories split, don't copy them literally.
+    When implementing apps/web UI, use the shadcn skill to add/scaffold components.
+  - Postgres via Drizzle. Every FK / filtered / sorted / unique column needs an index
+    defined alongside the schema, not added later as an afterthought.
+  - Tests run via `bun test` and must be written around real use cases / user flows,
+    never added just to raise line coverage.
+  - If a change must deviate from .docs/architecture/, say so explicitly in that
+    change's design.md with a rationale, and update the relevant doc in the same
+    change if the deviation is meant to become the new default.
+
+# Per-artifact rules (optional)
+# Add custom rules for specific artifacts.
+rules:
+  proposal:
+    - Name the .docs/architecture/ modules/apps this change touches (web modules, api
+      modules, packages/env, db schema) so the design stays scoped to real boundaries.
+    - If this change adds or changes a frequent user action, state its keyboard
+      shortcut and its low-friction screen interaction (per .docs/product/overview.md).
+  design:
+    - Call out explicitly any place this change deviates from .docs/architecture/,
+      and why.
+  tasks:
+    - For every user-facing or API-facing behavior change, include the specific use
+      case(s)/flow(s) being implemented and a paired task to write a bun test for
+      that flow (see .docs/architecture/testing.md). A task to "implement X"
+      without a corresponding "test that a user can do Y through X" task is incomplete.
+    - If the change adds or modifies a database table/column that will be queried,
+      filtered, or joined on, include a task to add the matching index.
