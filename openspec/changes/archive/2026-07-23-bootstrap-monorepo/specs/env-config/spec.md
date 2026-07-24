@@ -1,7 +1,7 @@
 ## ADDED Requirements
 
 ### Requirement: Centralized environment variable validation
-`@fynn/env` SHALL be the single package that defines and validates environment
+`@oinc/env` SHALL be the single package that defines and validates environment
 variables used anywhere in the monorepo, via `@t3-oss/env-core`. Application code
 SHALL NOT read `process.env` directly.
 
@@ -16,11 +16,11 @@ SHALL NOT read `process.env` directly.
   than silently passing an empty string through
 
 ### Requirement: Apps consume shared schemas, not raw process.env
-Each app SHALL import and extend `@fynn/env`'s schema(s) for its own env file
+Each app SHALL import and extend `@oinc/env`'s schema(s) for its own env file
 rather than declaring an independent validation scheme.
 
 #### Scenario: apps/api extends the shared schema
 - **WHEN** `apps/api`'s env module is inspected
-- **THEN** it imports a schema exported from `@fynn/env` and extends it with any
+- **THEN** it imports a schema exported from `@oinc/env` and extends it with any
   api-specific variables, rather than calling `createEnv` from scratch with a
   duplicated `DATABASE_URL` definition

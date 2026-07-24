@@ -59,7 +59,7 @@ same Postgres instance, and a root compose file is discoverable without knowing
 which app "owns" infra first.
 
 **Test database is a second database in the same Postgres container, e.g.
-`fynn_test`**, per `testing.md`'s transaction-rollback isolation model — not a
+`oinc_test`**, per `testing.md`'s transaction-rollback isolation model — not a
 second container. One `docker-compose up` is enough for both dev and test.
 
 **shadcn/ui `baseColor: "neutral"`**, resolving the placeholder in `frontend.md`'s

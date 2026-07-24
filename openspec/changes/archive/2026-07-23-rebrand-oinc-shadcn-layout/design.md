@@ -3,7 +3,7 @@
 `apps/web` currently has exactly two pages behind/around auth: a hand-rolled
 `(public)/sign-in` (a single `Card` with one Google button) and a hand-rolled
 `(private)/dashboard` (a bare `h1` + sign-out button, no shell). Both apps still carry
-the placeholder name `fynn` in package names, imports, docs, and `docker-compose.yml`.
+the placeholder name `oinc` in package names, imports, docs, and `docker-compose.yml`.
 The user has already changed `apps/web`'s root layout title/favicon by hand, but
 nothing else. `apps/web/components.json` already runs shadcn's `base-nova` preset
 (base-ui primitives), while `.docs/architecture/frontend.md` and
@@ -18,7 +18,7 @@ assuming from memory), and resolved several either/or calls with the user direct
 ## Goals / Non-Goals
 
 **Goals:**
-- Rename `fynn` → `oinc` everywhere the identifier is load-bearing (package names,
+- Rename `oinc` → `oinc` everywhere the identifier is load-bearing (package names,
   imports, infra credentials, spec/doc prose) without touching historical record.
 - Replace the two hand-rolled pages with shadcn-block-derived patterns, landing on a
   private-route shell (sidebar + header) that every current and future private route
@@ -42,12 +42,12 @@ assuming from memory), and resolved several either/or calls with the user direct
 ## Decisions
 
 **1. Rename scope: package identifiers + infra, not history or the local path.**
-`@fynn/web`/`@fynn/api`/`@fynn/env` (and root `package.json`'s `name`) become
+`@oinc/web`/`@oinc/api`/`@oinc/env` (and root `package.json`'s `name`) become
 `@oinc/*`; every import site follows. `docker-compose.yml`'s Postgres
-user/password/db (`fynn`/`fynn_dev` → `oinc`/`oinc_dev`) is renamed too. Archived
-`openspec/changes/archive/**` are left saying "Fynn" — they're a record of decisions
+user/password/db (`oinc`/`oinc_dev` → `oinc`/`oinc_dev`) is renamed too. Archived
+`openspec/changes/archive/**` are left saying "oinc" — they're a record of decisions
 made under the old name, not living documentation. The local clone's directory name
-(`/home/luiz/repos/fynn`) is left alone — there's no git remote configured for it to
+(`/home/luiz/repos/oinc`) is left alone — there's no git remote configured for it to
 drift from, so renaming it would only churn editor/terminal paths for no functional
 gain.
 
@@ -119,10 +119,10 @@ here, it's a factual correction to match already-deployed reality.
 
 ## Risks / Trade-offs
 
-- **[Risk]** A missed `@fynn/*` import site silently breaks the build or, worse, a
+- **[Risk]** A missed `@oinc/*` import site silently breaks the build or, worse, a
   runtime path that isn't covered by `check-types` (e.g. a dynamic import or string
   reference in a config file). → **Mitigation**: rename via repo-wide grep for
-  `fynn`/`Fynn`/`@fynn` (case-sensitive and case-insensitive passes) before touching
+  `oinc`/`oinc`/`@oinc` (case-sensitive and case-insensitive passes) before touching
   logic, then gate on `bun run lint && bun test && bun run build` per `CLAUDE.md`'s
   existing pre-done checklist — a missed import fails `check-types`/`build` loudly.
 - **[Risk]** Dropping the local Postgres volume loses whatever is currently seeded in

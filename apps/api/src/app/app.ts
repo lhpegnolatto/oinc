@@ -47,7 +47,11 @@ app.use("*", async (c, next) => {
 
 app.onError(errorHandler);
 
-registerRoutes(app);
+// `.route()` mutates `app` in place and returns `this`, but only the return
+// value carries the merged route-map type Hono needs to type-check the RPC
+// client — capturing it (rather than discarding registerRoutes(app)'s
+// result) is required for apps/web's hc<AppType>() to see any module route.
+const routedApp = registerRoutes(app);
 
 // Exported for apps/web's Hono RPC client — see "Web ↔ API type safety" in frontend.md.
-export type AppType = typeof app;
+export type AppType = typeof routedApp;

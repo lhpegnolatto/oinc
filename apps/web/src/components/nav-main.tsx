@@ -1,4 +1,4 @@
-import { LayoutDashboardIcon } from "lucide-react";
+import { navItems } from "@/components/nav-items";
 import {
   SidebarGroup,
   SidebarGroupContent,
@@ -6,10 +6,6 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
-
-const navItems = [
-  { title: "Dashboard", url: "/dashboard", icon: LayoutDashboardIcon },
-];
 
 export function NavMain() {
   return (

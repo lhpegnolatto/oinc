@@ -62,7 +62,12 @@ export default function SignInPage() {
                   </svg>
                   Continue with Google
                 </Button>
-                <Button variant="outline" type="button" disabled className="cursor-not-allowed">
+                <Button
+                  variant="outline"
+                  type="button"
+                  disabled
+                  className="cursor-not-allowed"
+                >
                   <svg
                     xmlns="http://www.w3.org/2000/svg"
                     viewBox="0 0 24 24"

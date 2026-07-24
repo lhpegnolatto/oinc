@@ -10,7 +10,7 @@
 - [x] 1.4 Add root `.gitignore` (node_modules, `.turbo`, `dist`/`.next` build
       output, `.env*` except `.env.example`)
 - [x] 1.5 Add root `docker-compose.yml` with a Postgres service exposing a dev
-      database and a second `fynn_test` database (or an init script that creates
+      database and a second `oinc_test` database (or an init script that creates
       both) for the transaction-rollback test isolation approach
 
 ## 2. packages/env
@@ -25,7 +25,7 @@
 
 - [x] 3.1 Scaffold `apps/api` workspace package (`package.json` with `hono`,
       `drizzle-orm`, `drizzle-kit`; `tsconfig.json`)
-- [x] 3.2 Add `apps/api/src/env.ts` extending `@fynn/env`'s `dbEnv`
+- [x] 3.2 Add `apps/api/src/env.ts` extending `@oinc/env`'s `dbEnv`
 - [x] 3.3 Add `shared/db/` — Drizzle client (`shared/db/client.ts`), empty schema
       barrel (`shared/db/schema/index.ts`), `drizzle.config.ts` pointing at it
 - [x] 3.4 Add `shared/errors/` — `ApiError` base class and a couple of concrete

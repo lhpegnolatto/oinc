@@ -8,6 +8,8 @@ intent change by change.
 
 - **overview.md** (this file) — vision, problem, target user, core domains, product
   principles, non-goals.
+- **[roadmap.md](roadmap.md)** — the queued sequence of upcoming OpenSpec changes, in
+  order, with the module(s) each touches and why it's sequenced there.
 
 As product areas grow enough to need their own detail, split them out the same way
 `.docs/architecture/` splits by app (e.g. `transactions.md`, `investments.md`) instead of

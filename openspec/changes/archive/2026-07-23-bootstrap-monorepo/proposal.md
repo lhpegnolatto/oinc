@@ -1,6 +1,6 @@
 ## Why
 
-Fynn currently has architecture decisions written down (`.docs/architecture/`,
+oinc currently has architecture decisions written down (`.docs/architecture/`,
 `.docs/product/`) but no code — no `apps/`, no `packages/`, no root tooling. Every
 future change (auth, wallets, transactions, ...) needs a monorepo that actually
 builds, lints, and boots before it can add a single line of domain logic. This change
@@ -10,7 +10,7 @@ turns the documented decisions into a running skeleton so that work can start.
 
 - Add root Turborepo/Bun tooling: `package.json` (workspaces), `turbo.json`,
   root `biome.json`, `.gitignore`, pinned `packageManager`.
-- Add `packages/env` (`@fynn/env`) with a shared server env schema
+- Add `packages/env` (`@oinc/env`) with a shared server env schema
   (`@t3-oss/env-core`) covering `DATABASE_URL` for now; apps extend it rather than
   reading `process.env` directly.
 - Add `apps/api` skeleton: Hono app that boots and exports `AppType`, `shared/db`
@@ -36,7 +36,7 @@ turns the documented decisions into a running skeleton so that work can start.
 - `monorepo-tooling`: Turborepo/Bun workspace wiring, Biome as the single
   linter/formatter, and the scripts (`build`, `dev`, `lint`, `test`, `check-types`)
   that fan out across `apps/*` and `packages/*`.
-- `env-config`: `@fynn/env` as the single source of validated environment variables,
+- `env-config`: `@oinc/env` as the single source of validated environment variables,
   consumed by both apps instead of raw `process.env` access.
 - `api-skeleton`: `apps/api` boots as a Hono app, connects to Postgres via Drizzle,
   and returns errors through the shared `{ error: { code, message, details } }`

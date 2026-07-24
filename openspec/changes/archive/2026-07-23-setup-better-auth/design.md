@@ -9,7 +9,7 @@ in dev (`localhost:3000` → `localhost:3001`) and in production alike. That fac
 most of the decisions below; a same-origin setup (Next API routes, or a proxy) would not
 need most of this.
 
-Fynn is multi-tenant: any Google account can sign up and gets fully isolated data. The
+oinc is multi-tenant: any Google account can sign up and gets fully isolated data. The
 product doc's "no multi-user/shared-account features" non-goal means no sharing *between*
 accounts (no households/permissions) — it does not mean only one account may ever exist.
 
@@ -160,7 +160,7 @@ explicit name in the existing example.
 
 1. Add `better-auth` to `apps/api` and `apps/web`; add `GOOGLE_CLIENT_ID`,
    `GOOGLE_CLIENT_SECRET`, `BETTER_AUTH_SECRET` to `apps/api`'s env schema, and whatever
-   `apps/web` needs for the auth client's `baseURL`, via `@fynn/env` — never read
+   `apps/web` needs for the auth client's `baseURL`, via `@oinc/env` — never read
    `process.env` directly.
 2. Generate the Better Auth Drizzle schema, hand-check/add indexes, run `drizzle-kit
    generate` + apply against the local Postgres (docker-compose).
@@ -178,7 +178,7 @@ explicit name in the existing example.
 ## Open Questions
 
 - **Production domain topology is not decided.** If `apps/web` and `apps/api` end up on
-  subdomains of one root domain (e.g. `app.fynn.com` / `api.fynn.com`), Better Auth's
+  subdomains of one root domain (e.g. `app.oinc.com` / `api.oinc.com`), Better Auth's
   `crossSubDomainCookies` is the right mechanism. If they end up on genuinely unrelated
   domains, cookie sharing does not work the same way and this design would need
   revisiting (likely a proxy, or a token-based scheme) — flagging so it isn't silently

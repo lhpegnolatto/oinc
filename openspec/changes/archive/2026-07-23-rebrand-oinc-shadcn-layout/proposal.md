@@ -1,6 +1,6 @@
 ## Why
 
-The product is being rebranded from the placeholder name "Fynn" to "oinc" (favicon/title
+The product is being rebranded from the placeholder name "oinc" to "oinc" (favicon/title
 in `apps/web`'s root layout are already updated by hand). Renaming touches package names,
 imports, docs, and infra config across both apps, so it's worth doing as one deliberate
 pass rather than piecemeal. It also surfaces a good moment to fix a stale spec/doc
@@ -14,11 +14,11 @@ private routes being added as the product grows.
 
 ## What Changes
 
-- Rename `fynn` → `oinc` across package names (root `package.json`, `@fynn/web`,
-  `@fynn/api`, `@fynn/env` → `@oinc/*`), all workspace imports of those package names,
+- Rename `oinc` → `oinc` across package names (root `package.json`, `@oinc/web`,
+  `@oinc/api`, `@oinc/env` → `@oinc/*`), all workspace imports of those package names,
   and prose in `.docs/`, `openspec/config.yaml`, and current `openspec/specs/*.md`.
   Archived `openspec/changes/archive/**` are left untouched as a historical record.
-- Rename `docker-compose.yml`'s Postgres user/password/db (`fynn`/`fynn_dev` →
+- Rename `docker-compose.yml`'s Postgres user/password/db (`oinc`/`oinc_dev` →
   `oinc`/`oinc_dev`); the existing local volume is dropped and recreated rather than
   migrated in place.
 - Correct `.docs/architecture/frontend.md` and `openspec/specs/web-skeleton/spec.md` to
@@ -39,7 +39,7 @@ private routes being added as the product grows.
   `data-table`) and their dependencies are not installed — nothing on the dashboard
   today uses them.
 - **BREAKING** (internal only, no external consumers): workspace package names change
-  from `@fynn/*` to `@oinc/*`; any local `.env` or tooling referencing the old Postgres
+  from `@oinc/*` to `@oinc/*`; any local `.env` or tooling referencing the old Postgres
   db/user names must be updated.
 
 ## Capabilities
@@ -49,10 +49,10 @@ private routes being added as the product grows.
 than introducing new product behavior)
 
 ### Modified Capabilities
-- `env-config`: requirement text names the package `@fynn/env` explicitly; update to
+- `env-config`: requirement text names the package `@oinc/env` explicitly; update to
   `@oinc/env` to match the rename (no behavior change, just the identifier the
   requirement asserts).
-- `api-skeleton`: the Postgres-connectivity requirement names `@fynn/env` as the source
+- `api-skeleton`: the Postgres-connectivity requirement names `@oinc/env` as the source
   of `DATABASE_URL`; update to `@oinc/env`.
 - `web-skeleton`: the shadcn/ui-initialized requirement currently asserts the `new-york`
   style; correct it to `base-nova` (matching `components.json`, which is already on the
@@ -63,7 +63,7 @@ than introducing new product behavior)
 ## Impact
 
 - **Code**: root `package.json`; `apps/web/package.json`, `apps/api/package.json`,
-  `packages/env/package.json`; every import of `@fynn/env`; `apps/web/src/app/(public)/sign-in/page.tsx`;
+  `packages/env/package.json`; every import of `@oinc/env`; `apps/web/src/app/(public)/sign-in/page.tsx`;
   `apps/web/src/app/(private)/layout.tsx`; `apps/web/src/app/(private)/dashboard/page.tsx`;
   new files under `apps/web/src/components/` (sidebar/header/nav shell).
 - **Dependencies**: adds `lucide-react` icon usage in the lifted sidebar components (no

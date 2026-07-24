@@ -1,14 +1,14 @@
-## 1. Rename: fynn → oinc (packages, imports, docs)
+## 1. Rename: oinc → oinc (packages, imports, docs)
 
-- [x] 1.1 Rename `package.json` `name` fields: root `fynn` → `oinc`, `@fynn/web` →
-  `@oinc/web`, `@fynn/api` → `@oinc/api`, `@fynn/env` → `@oinc/env`.
+- [x] 1.1 Rename `package.json` `name` fields: root `oinc` → `oinc`, `@oinc/web` →
+  `@oinc/web`, `@oinc/api` → `@oinc/api`, `@oinc/env` → `@oinc/env`.
 - [x] 1.2 Update every import/workspace-dependency reference to the renamed packages
-  (`@fynn/env` in `apps/api/src/env.ts`, `@fynn/api` type import in
+  (`@oinc/env` in `apps/api/src/env.ts`, `@oinc/api` type import in
   `apps/web/src/lib/api-client.ts`, `devDependencies` entries in `apps/web/package.json`
   and `apps/api/package.json`).
-- [x] 1.3 Rename `Fynn`/`fynn` prose in `.docs/architecture/{overview,frontend,backend,testing}.md`
+- [x] 1.3 Rename `oinc`/`oinc` prose in `.docs/architecture/{overview,frontend,backend,testing}.md`
   and `.docs/product/overview.md`.
-- [x] 1.4 Rename `Fynn`/`fynn` prose in `openspec/config.yaml` and the Purpose sections
+- [x] 1.4 Rename `oinc`/`oinc` prose in `openspec/config.yaml` and the Purpose sections
   of `openspec/specs/{monorepo-tooling,user-authentication,user-provisioning}/spec.md`
   (these have no requirement-level change, so no delta spec is needed for them — a
   direct prose edit). Leave `openspec/changes/archive/**` untouched.
@@ -17,8 +17,8 @@
 ## 2. Infra rename (Postgres, local env)
 
 - [x] 2.1 Update `docker-compose.yml`: `POSTGRES_USER`/`POSTGRES_PASSWORD`/`POSTGRES_DB`
-  from `fynn`/`fynn`/`fynn_dev` to `oinc`/`oinc`/`oinc_dev`.
-- [x] 2.2 Update `docker/init-test-db.sql`'s `CREATE DATABASE fynn_test;` to
+  from `oinc`/`oinc`/`oinc_dev` to `oinc`/`oinc`/`oinc_dev`.
+- [x] 2.2 Update `docker/init-test-db.sql`'s `CREATE DATABASE oinc_test;` to
   `CREATE DATABASE oinc_test;`, and the matching reference in
   `.docs/architecture/testing.md`.
 - [x] 2.3 Update `apps/api/.env.example`'s `DATABASE_URL` to the new
@@ -26,7 +26,7 @@
 - [x] 2.4 `docker compose down -v` the local Postgres container, then `docker compose up -d`
   to reinitialize with the new credentials; update the local (gitignored)
   `apps/api/.env`'s `DATABASE_URL` to match.
-- [x] 2.5 Replace the `Fynn`-named test fixture example in
+- [x] 2.5 Replace the `oinc`-named test fixture example in
   `.docs/architecture/testing.md`'s code sample with an `oinc`-neutral example.
 
 ## 3. Fix stale shadcn style reference (new-york → base-nova)

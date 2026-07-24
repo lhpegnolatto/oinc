@@ -55,3 +55,12 @@ test("a signed-in user can create a project", async () => {
 ```
 
 If a use case genuinely needs to exercise the HTTP layer end-to-end (controller → command/query → repository → Postgres), the same `withTestTransaction` wraps a request made with Hono's app directly (`app.request(...)`) instead of an ORM call — no real network hop needed since Hono can be invoked in-process.
+
+## `apps/web` test tiers
+
+`apps/web` has two tiers, chosen per use case rather than one tool for everything:
+
+- **`bun test src`** (co-located `*.test.ts`, e.g. `dashboard.test.ts`, `sign-in.test.ts`, `private-routes.test.ts`): spins up real `apps/api` + `apps/web` (`next dev`) processes with `Bun.spawn`, seeds a real signed-in session straight into Postgres via Better Auth's `testUtils` plugin (bypassing the Google OAuth dance), then asserts against a plain `fetch()`'s status/HTML body. This tier is for **server-rendered output and route guarding** — what's in the initial HTML, redirects, auth gating — anything a static fetch can observe.
+- **Playwright (`apps/web/e2e/*.spec.ts`, run via `bun run test:e2e`)**: drives a real browser against real `apps/api` + `apps/web` dev servers (`apps/web/playwright.config.ts`). This tier is for **client-side interaction that a static fetch can't exercise** — opening a dialog, filling and submitting a form, React Hook Form validation, a confirm-gated delete. `apps/web/e2e/seed-session.ts` provides the same Better-Auth-`testUtils` session seeding as the `bun test` tier, adapted to hand Playwright a cookie via `context.addCookies`.
+
+Rule of thumb: if the use case can be verified from the HTML a server returns, use the `bun test` tier. If it requires clicking, typing, or observing client-side state that only exists after hydration, use Playwright. `test:e2e` is not part of the `turbo run test` pipeline (it needs a running Postgres and is slower) — run it explicitly when a change touches interactive `apps/web` flows.

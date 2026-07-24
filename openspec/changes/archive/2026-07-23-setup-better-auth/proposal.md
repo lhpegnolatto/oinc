@@ -1,6 +1,6 @@
 ## Why
 
-Fynn has no authentication today — `apps/api`'s router is a no-op and `apps/web` has no
+oinc has no authentication today — `apps/api`'s router is a no-op and `apps/web` has no
 public/private route split wired up. Every product domain (wallets, transactions, credit
 cards, investments) needs a signed-in, isolated user before it can store anything
 meaningful, so auth is the first real feature: nothing else can be built per-user until
@@ -62,7 +62,7 @@ identity exists end-to-end across both apps.
 - `apps/api`: new `src/shared/auth/` (Better Auth instance, `requireAuth` middleware),
   new `src/modules/users/` module, `src/shared/db/schema/` gains generated auth tables,
   `src/app/app.ts` and `src/app/routes.ts` wire the handler/middleware in, new
-  `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/`BETTER_AUTH_SECRET` env vars via `@fynn/env`.
+  `GOOGLE_CLIENT_ID`/`GOOGLE_CLIENT_SECRET`/`BETTER_AUTH_SECRET` env vars via `@oinc/env`.
 - `apps/web`: new `src/app/(public)/login/`, new `src/middleware.ts`, `src/app/(private)/layout.tsx`
   gains a real session check (currently absent), new `src/lib/auth-client.ts`, new
   `NEXT_PUBLIC_*`/server env vars as needed for the auth client's `baseURL`.

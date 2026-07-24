@@ -3,7 +3,7 @@
 - [x] 1.1 Add `better-auth` to `apps/api` and `apps/web` package.json (`bun add` in each,
       not the root).
 - [x] 1.2 Add `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `BETTER_AUTH_SECRET` to
-      `apps/api/src/env.ts`'s `server` schema (via `@fynn/env`, not raw `process.env`).
+      `apps/api/src/env.ts`'s `server` schema (via `@oinc/env`, not raw `process.env`).
 - [x] 1.3 Add whatever `apps/web` needs for the Better Auth client's `baseURL` (e.g. reuse
       `NEXT_PUBLIC_API_URL`, already present in `apps/web/src/env.ts`) — add a new
       `NEXT_PUBLIC_*` var only if `NEXT_PUBLIC_API_URL` isn't the right value to point at.
