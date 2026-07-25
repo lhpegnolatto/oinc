@@ -208,6 +208,16 @@ test.describe("wallets", () => {
   test("the dashboard renders a link that navigates to /wallets", async ({
     page,
   }) => {
+    // The dashboard's wallets link lives alongside net worth/chart, which
+    // only render once the user has at least one wallet — a zero-wallet
+    // dashboard shows the create-wallet empty state instead (tasks.md 7.2).
+    await page.goto("/wallets");
+    await page.getByRole("button", { name: "Add wallet" }).click();
+    await page.getByLabel("Name", { exact: true }).fill("Checking");
+    await page.getByLabel("Starting balance", { exact: true }).fill("100");
+    await page.getByRole("button", { name: "Create" }).click();
+    await expect(page.getByText("Checking", { exact: true })).toBeVisible();
+
     await page.goto("/dashboard");
     await page.getByRole("main").getByRole("link", { name: "Wallets" }).click();
     await expect(page).toHaveURL(/\/wallets$/);

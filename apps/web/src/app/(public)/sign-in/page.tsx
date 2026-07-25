@@ -19,6 +19,7 @@ export default function SignInPage() {
         <div className="flex items-center gap-2 self-center font-medium">
           <Image
             src="/icon.svg"
+            loading="eager"
             alt=""
             width={24}
             height={24}

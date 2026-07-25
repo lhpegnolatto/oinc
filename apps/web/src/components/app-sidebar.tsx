@@ -27,6 +27,7 @@ export function AppSidebar({
             >
               <Image
                 src="/icon.svg"
+                loading="eager"
                 alt=""
                 width={20}
                 height={20}

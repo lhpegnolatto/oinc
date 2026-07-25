@@ -87,11 +87,14 @@ export type TransactionFilters = {
   dateFrom?: string;
   dateTo?: string;
   noteSearch?: string;
+  limit?: number;
 };
 
 export async function fetchAllTransactions(filters: TransactionFilters) {
   const query = Object.fromEntries(
-    Object.entries(filters).filter(([, value]) => value !== undefined),
+    Object.entries(filters)
+      .filter(([, value]) => value !== undefined)
+      .map(([key, value]) => [key, String(value)]),
   );
   const res = await allTransactionsApi.$get({ query });
   return parseOrThrow<TransactionWithWalletDto[]>(res);

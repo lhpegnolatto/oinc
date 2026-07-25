@@ -4,7 +4,6 @@ import { usePathname } from "next/navigation";
 import { navItems } from "@/components/nav-items";
 import { Separator } from "@/components/ui/separator";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { QuickAddTransactionTrigger } from "@/modules/transactions/components/quick-add-transaction-trigger";
 
 // Flattened so a nested route (e.g. /transactions/categories) can match its
 // own "Categories" entry rather than falling back to its parent's title.
@@ -29,7 +28,6 @@ export function SiteHeader() {
         <h1 className="flex-1 text-base font-medium">
           {activeItem?.title ?? "Dashboard"}
         </h1>
-        <QuickAddTransactionTrigger />
       </div>
     </header>
   );

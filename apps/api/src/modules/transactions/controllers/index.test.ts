@@ -943,6 +943,85 @@ describe("transactions controller", () => {
       }
     });
 
+    test("limit caps the number of results to the N most recent", async () => {
+      const { headers, cleanup } = await createSignedInUser("tx-all-limit");
+      try {
+        const wallet = await createWallet(headers, {
+          name: "Checking",
+          balance: 0,
+        });
+        await createTransactionFor(headers, wallet.id, {
+          type: "expense",
+          amount: 10,
+          categoryId: "system-food",
+          date: "2026-01-01",
+        });
+        await createTransactionFor(headers, wallet.id, {
+          type: "expense",
+          amount: 20,
+          categoryId: "system-food",
+          date: "2026-01-02",
+        });
+        await createTransactionFor(headers, wallet.id, {
+          type: "expense",
+          amount: 30,
+          categoryId: "system-food",
+          date: "2026-01-03",
+        });
+
+        const res = await app.request("/transactions?limit=2", { headers });
+        const body = await res.json();
+
+        expect(res.status).toBe(200);
+        expect(body).toHaveLength(2);
+        expect(body[0].amount).toBe(30);
+        expect(body[1].amount).toBe(20);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    test("limit combined with existing filters still applies both correctly", async () => {
+      const { headers, cleanup } =
+        await createSignedInUser("tx-all-limit-combo");
+      try {
+        const wallet = await createWallet(headers, {
+          name: "Checking",
+          balance: 0,
+        });
+        await createTransactionFor(headers, wallet.id, {
+          type: "expense",
+          amount: 10,
+          categoryId: "system-food",
+          date: "2026-01-01",
+        });
+        await createTransactionFor(headers, wallet.id, {
+          type: "expense",
+          amount: 20,
+          categoryId: "system-food",
+          date: "2026-01-02",
+        });
+        // Income — excluded by the type filter regardless of limit.
+        await createTransactionFor(headers, wallet.id, {
+          type: "income",
+          amount: 999,
+          categoryId: "system-salary",
+          date: "2026-01-03",
+        });
+
+        const res = await app.request("/transactions?type=expense&limit=1", {
+          headers,
+        });
+        const body = await res.json();
+
+        expect(res.status).toBe(200);
+        expect(body).toHaveLength(1);
+        expect(body[0].amount).toBe(20);
+      } finally {
+        await cleanup();
+      }
+    });
+
     test("a filter combination matching nothing returns an empty list, not an error", async () => {
       const { headers, cleanup } = await createSignedInUser("tx-all-nomatch");
       try {

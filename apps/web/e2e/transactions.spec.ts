@@ -44,10 +44,10 @@ test.describe("transactions", () => {
     await deleteSeededUser(userId);
   });
 
-  test("pressing the shortcut key opens the quick-add sheet from anywhere in the private app", async ({
+  test("pressing the shortcut key opens the quick-add sheet from a non-dashboard page", async ({
     page,
   }) => {
-    await page.goto("/dashboard");
+    await page.goto("/wallets");
     await page.keyboard.press("n");
 
     await expect(
@@ -69,7 +69,7 @@ test.describe("transactions", () => {
     await expect(page.getByLabel("Name", { exact: true })).toHaveValue("n");
   });
 
-  test("opening the sheet from a wallet's page pre-fills that wallet, and it stays changeable", async ({
+  test("pressing the shortcut key from a wallet's page pre-fills that wallet, and it stays changeable", async ({
     page,
   }) => {
     await createWallet(page, "Checking", "100");
@@ -78,7 +78,7 @@ test.describe("transactions", () => {
     await page.getByText("Checking", { exact: true }).click();
     await expect(page).toHaveURL(/\/wallets\/[^/]+$/);
 
-    await page.getByRole("button", { name: "Add transaction" }).click();
+    await page.keyboard.press("n");
     await expect(page.getByRole("combobox").last()).toContainText("Checking");
 
     // Still changeable before submitting.
@@ -110,7 +110,7 @@ test.describe("transactions", () => {
     await page.goto("/wallets");
     await page.getByText("Checking", { exact: true }).click();
 
-    await page.getByRole("button", { name: "Add transaction" }).click();
+    await page.getByRole("button", { name: "Log transaction" }).click();
     await page.getByRole("button", { name: "Expense" }).click();
     await page.getByLabel("Amount").fill("30");
     await page.getByRole("combobox").first().click();
@@ -132,7 +132,7 @@ test.describe("transactions", () => {
     await page.goto("/wallets");
     await page.getByText("Checking", { exact: true }).click();
 
-    await page.getByRole("button", { name: "Add transaction" }).click();
+    await page.getByRole("button", { name: "Log transaction" }).click();
     await page.getByRole("button", { name: "New category" }).click();
     await page.getByPlaceholder("e.g. Groceries").fill("Side hustle income");
     await page
@@ -155,7 +155,7 @@ test.describe("transactions", () => {
     await page.goto("/wallets");
     await page.getByText("Checking", { exact: true }).click();
 
-    await page.getByRole("button", { name: "Add transaction" }).click();
+    await page.getByRole("button", { name: "Log transaction" }).click();
     await page.getByRole("button", { name: "Expense" }).click();
     await page.getByLabel("Amount").fill("20");
     await page.getByRole("combobox").first().click();
@@ -181,7 +181,7 @@ test.describe("transactions", () => {
     await page.goto("/wallets");
     await page.getByText("Checking", { exact: true }).click();
 
-    await page.getByRole("button", { name: "Add transaction" }).click();
+    await page.getByRole("button", { name: "Log transaction" }).click();
     await page.getByRole("button", { name: "Expense" }).click();
     await page.getByLabel("Amount").fill("30");
     await page.getByRole("combobox").first().click();

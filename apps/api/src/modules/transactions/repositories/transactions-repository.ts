@@ -22,6 +22,7 @@ type ListForUserFilters = {
   dateFrom?: string;
   dateTo?: string;
   noteSearch?: string;
+  limit?: number;
 };
 
 function balanceDelta(type: "income" | "expense", amount: number) {
@@ -65,7 +66,7 @@ export class TransactionsRepository {
       conditions.push(ilike(transaction.note, `%${filters.noteSearch}%`));
     }
 
-    return this.db
+    const query = this.db
       .select({
         id: transaction.id,
         walletId: transaction.walletId,
@@ -87,6 +88,11 @@ export class TransactionsRepository {
       .innerJoin(wallet, eq(transaction.walletId, wallet.id))
       .where(and(...conditions))
       .orderBy(desc(transaction.date), desc(transaction.createdAt));
+
+    if (filters.limit) {
+      return query.limit(filters.limit);
+    }
+    return query;
   }
 
   async findOwnedById(id: string, userId: string) {

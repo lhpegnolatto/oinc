@@ -52,8 +52,8 @@ function defaultValues(defaultWalletId?: string): TransactionFormValues {
   };
 }
 
-// Reachable via both a persistent quick-action button and the global "n"
-// shortcut (see QuickAddTransactionTrigger) — opening it never navigates
+// Reachable via both a visible "Add transaction" button and the global "n"
+// shortcut (see QuickAddTransactionProvider) — opening it never navigates
 // away from the current page.
 export function QuickAddTransactionSheet({
   open,

@@ -4,6 +4,7 @@ import { AppSidebar } from "@/components/app-sidebar";
 import { SiteHeader } from "@/components/site-header";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { getSessionUser } from "@/lib/session";
+import { QuickAddTransactionProvider } from "@/modules/transactions/components/quick-add-transaction-provider";
 
 export default async function PrivateLayout({
   children,
@@ -28,13 +29,15 @@ export default async function PrivateLayout({
         <AppSidebar user={user} variant="inset" />
         <SidebarInset>
           <SiteHeader />
-          <div className="flex flex-1 flex-col">
-            <div className="@container/main flex flex-1 flex-col gap-2">
-              <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 lg:px-6">
-                {children}
+          <QuickAddTransactionProvider>
+            <div className="flex flex-1 flex-col">
+              <div className="@container/main flex flex-1 flex-col gap-2">
+                <div className="flex flex-col gap-4 py-4 md:gap-6 md:py-6 px-4 lg:px-6">
+                  {children}
+                </div>
               </div>
             </div>
-          </div>
+          </QuickAddTransactionProvider>
         </SidebarInset>
       </SidebarProvider>
     </NuqsAdapter>

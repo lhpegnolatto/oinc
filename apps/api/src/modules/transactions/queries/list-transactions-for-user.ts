@@ -10,6 +10,7 @@ export async function listTransactionsForUser(
     dateFrom?: string;
     dateTo?: string;
     noteSearch?: string;
+    limit?: number;
   },
 ) {
   return repo.findAllForUser(input);
