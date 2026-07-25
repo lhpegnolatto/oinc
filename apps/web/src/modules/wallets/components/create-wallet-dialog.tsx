@@ -22,8 +22,8 @@ import {
   FieldLabel,
 } from "@/components/ui/field";
 import { Input } from "@/components/ui/input";
+import { COLOR_PRESETS } from "@/lib/color-presets";
 import { useCreateWalletMutation } from "../hooks/use-create-wallet-mutation";
-import { WALLET_COLOR_PRESETS } from "../lib/wallet-color-presets";
 import {
   type CreateWalletFormValues,
   createWalletFormSchema,
@@ -42,7 +42,7 @@ export function CreateWalletDialog({
     defaultValues: {
       name: "",
       balance: 0,
-      color: WALLET_COLOR_PRESETS[0],
+      color: COLOR_PRESETS[0],
       icon: DEFAULT_WALLET_ICON,
     },
   });

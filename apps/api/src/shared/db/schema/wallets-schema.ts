@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import { index, numeric, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
+import { transaction } from "./transactions-schema";
 
 export const wallet = pgTable(
   "wallet",
@@ -26,9 +27,10 @@ export const wallet = pgTable(
   (table) => [index("wallet_userId_idx").on(table.userId)],
 );
 
-export const walletRelations = relations(wallet, ({ one }) => ({
+export const walletRelations = relations(wallet, ({ one, many }) => ({
   user: one(user, {
     fields: [wallet.userId],
     references: [user.id],
   }),
+  transactions: many(transaction),
 }));

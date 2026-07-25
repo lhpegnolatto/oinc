@@ -1,4 +1,4 @@
-export const WALLET_COLOR_PRESETS = [
+export const COLOR_PRESETS = [
   "#71717a",
   "#ef4444",
   "#f97316",

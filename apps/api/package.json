@@ -6,6 +6,8 @@
   "types": "./src/index.ts",
   "exports": {
     ".": "./src/index.ts",
+    "./appearance": "./src/shared/validation/appearance.ts",
+    "./category-appearance": "./src/shared/validation/category-appearance.ts",
     "./wallet-appearance": "./src/shared/validation/wallet-appearance.ts"
   },
   "scripts": {

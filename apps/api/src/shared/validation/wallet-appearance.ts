@@ -1,4 +1,5 @@
 import * as z from "zod";
+import { colorSchema, DEFAULT_COLOR } from "./appearance";
 
 // Fixed, hand-picked set — independent of whatever Lucide ships in a given
 // version, so a future Lucide upgrade can't silently invalidate stored
@@ -40,12 +41,7 @@ export type WalletIconKey = (typeof WALLET_ICON_KEYS)[number];
 
 export const walletIconSchema = z.enum(WALLET_ICON_KEYS);
 
-export const WALLET_COLOR_HEX_REGEX = /^#[0-9a-f]{6}$/i;
+export const walletColorSchema = colorSchema;
 
-export const walletColorSchema = z
-  .string()
-  .regex(WALLET_COLOR_HEX_REGEX, "Must be a valid hex color, e.g. #22c55e")
-  .transform((value) => value.toLowerCase());
-
-export const DEFAULT_WALLET_COLOR = "#71717a";
+export const DEFAULT_WALLET_COLOR = DEFAULT_COLOR;
 export const DEFAULT_WALLET_ICON: WalletIconKey = "wallet";

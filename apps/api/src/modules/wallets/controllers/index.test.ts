@@ -2,9 +2,11 @@ import { describe, expect, test } from "bun:test";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
 import { testUtils } from "better-auth/plugins";
+import { eq } from "drizzle-orm";
 import { app } from "../../../app/app";
 import { env } from "../../../env";
 import { db } from "../../../shared/db/client";
+import { transaction } from "../../../shared/db/schema";
 
 // Mirrors shared/auth/auth.test.ts's approach: a test-only Better Auth
 // instance sharing the same DB + secret as the real `auth`, so its sessions
@@ -394,6 +396,87 @@ describe("wallets controller", () => {
     } finally {
       await owner.cleanup();
       await attacker.cleanup();
+    }
+  });
+
+  test("deleting a wallet also deletes its transactions", async () => {
+    const { headers, cleanup } = await createSignedInUser(
+      "wallets-delete-cascade",
+    );
+    try {
+      const createRes = await app.request("/wallets", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ name: "Checking", balance: 100 }),
+      });
+      const created = await createRes.json();
+
+      const txRes = await app.request(`/wallets/${created.id}/transactions`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          type: "expense",
+          amount: 10,
+          categoryId: "system-food",
+          date: "2026-01-15",
+        }),
+      });
+      const createdTransaction = await txRes.json();
+
+      const deleteRes = await app.request(`/wallets/${created.id}`, {
+        method: "DELETE",
+        headers,
+      });
+      expect(deleteRes.status).toBe(204);
+
+      const remaining = await db.query.transaction.findFirst({
+        where: eq(transaction.id, createdTransaction.id),
+      });
+      expect(remaining).toBeUndefined();
+    } finally {
+      await cleanup();
+    }
+  });
+
+  test("updating a wallet's name or appearance never changes its balance, even after transactions exist", async () => {
+    const { headers, cleanup } = await createSignedInUser(
+      "wallets-update-balance-immutable",
+    );
+    try {
+      const createRes = await app.request("/wallets", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({ name: "Checking", balance: 100 }),
+      });
+      const created = await createRes.json();
+
+      await app.request(`/wallets/${created.id}/transactions`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          type: "expense",
+          amount: 30,
+          categoryId: "system-food",
+          date: "2026-01-15",
+        }),
+      });
+
+      const updateRes = await app.request(`/wallets/${created.id}`, {
+        method: "PATCH",
+        headers,
+        body: JSON.stringify({
+          name: "Renamed",
+          color: "#f97316",
+          icon: "landmark",
+        }),
+      });
+      const updated = await updateRes.json();
+
+      expect(updateRes.status).toBe(200);
+      expect(updated.name).toBe("Renamed");
+      expect(updated.balance).toBe(70);
+    } finally {
+      await cleanup();
     }
   });
 });

@@ -12,8 +12,8 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { COLOR_PRESETS } from "@/lib/color-presets";
 import { cn } from "@/lib/utils";
-import { WALLET_COLOR_PRESETS } from "../lib/wallet-color-presets";
 import { WALLET_ICON_COMPONENTS } from "../lib/wallet-icons";
 
 const HEX_COLOR_REGEX = /^#[0-9a-fA-F]{6}$/;
@@ -78,7 +78,7 @@ export function WalletAppearancePicker({
         <div className="mt-2.5 flex flex-col gap-2.5">
           <p className="text-xs font-medium text-muted-foreground">Color</p>
           <div className="flex flex-wrap gap-1.5">
-            {WALLET_COLOR_PRESETS.map((preset) => (
+            {COLOR_PRESETS.map((preset) => (
               <button
                 key={preset}
                 type="button"

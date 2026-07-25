@@ -1,5 +1,5 @@
+import { formatCurrency } from "@/lib/format-currency";
 import type { WalletDto } from "../api";
-import { formatCurrency } from "../lib/format-currency";
 
 export function NetWorthTotal({ wallets }: { wallets: WalletDto[] }) {
   const total = wallets.reduce((sum, wallet) => sum + wallet.balance, 0);

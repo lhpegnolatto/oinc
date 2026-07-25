@@ -1,5 +1,6 @@
 export {
   ApiError,
+  ConflictError,
   NotFoundError,
   UnauthorizedError,
   ValidationError,

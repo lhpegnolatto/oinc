@@ -1,4 +1,5 @@
 import type { WalletIconKey } from "@oinc/api/wallet-appearance";
+import Link from "next/link";
 import {
   Card,
   CardAction,
@@ -6,8 +7,8 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { formatCurrency } from "@/lib/format-currency";
 import type { WalletDto } from "../api";
-import { formatCurrency } from "../lib/format-currency";
 import { WALLET_ICON_COMPONENTS } from "../lib/wallet-icons";
 import { DeleteWalletDialog } from "./delete-wallet-dialog";
 import { EditWalletDialog } from "./edit-wallet-dialog";
@@ -18,7 +19,10 @@ export function WalletCard({ wallet }: { wallet: WalletDto }) {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center gap-2.5">
+        <Link
+          href={`/wallets/${wallet.id}`}
+          className="flex items-center gap-2.5"
+        >
           <div
             data-testid="wallet-appearance"
             data-icon={wallet.icon}
@@ -28,16 +32,18 @@ export function WalletCard({ wallet }: { wallet: WalletDto }) {
             <Icon className="size-4 text-white" />
           </div>
           <CardTitle>{wallet.name}</CardTitle>
-        </div>
+        </Link>
         <CardAction className="flex gap-1">
           <EditWalletDialog wallet={wallet} />
           <DeleteWalletDialog wallet={wallet} />
         </CardAction>
       </CardHeader>
       <CardContent>
-        <p className="text-2xl font-semibold">
-          {formatCurrency(wallet.balance)}
-        </p>
+        <Link href={`/wallets/${wallet.id}`}>
+          <p className="text-2xl font-semibold">
+            {formatCurrency(wallet.balance)}
+          </p>
+        </Link>
       </CardContent>
     </Card>
   );

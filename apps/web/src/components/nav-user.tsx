@@ -43,7 +43,7 @@ export function NavUser({ user }: { user: SessionUser }) {
               <SidebarMenuButton size="lg" className="aria-expanded:bg-muted" />
             }
           >
-            <Avatar className="size-8 rounded-lg grayscale">
+            <Avatar className="size-8 rounded-lg">
               {user.image && <AvatarImage src={user.image} alt={user.name} />}
               <AvatarFallback className="rounded-lg">
                 {initials(user.name)}
