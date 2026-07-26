@@ -27,7 +27,6 @@ Already covered by archived specs in `openspec/specs/`: monorepo/tooling skeleto
 |---|---|---|---|
 | 1 | `wallets-crud` | api: `wallets`, web: `wallets` | Nothing else can exist without an account to belong to. CRUD + balance; dashboard shows net worth = sum of wallets. |
 | 2 | `transactions-core` | api/web: `transactions` (includes a small fixed + user-custom category set, nested here rather than its own module since only transactions consume it today) | The canonical frequent action from the product doc — add/edit/delete, sheet + shortcut, list scoped to a wallet. Get this right on speed before anything else builds on it. |
-| 4 | `credit-cards-core` | api/web: `credit-cards` | New domain: card CRUD, statement cycle/due date fields, pending vs. posted transactions. |
 | 5 | `credit-card-statements` | api/web: `credit-cards` | Statement close/due-date behavior and paying a card from a wallet — a distinct use case (a transaction between two of the user's own domains) from just logging a card charge. |
 | 6 | `investments-core` | api/web: `investments` | Manual holdings (symbol, quantity, cost basis) + manual valuation updates — deliberately shallow per non-goals (no live market data, no tax lots). |
 | 7 | `net-worth-aggregation` | web: dashboard | Roll wallets + cards + investments into one net-worth number/chart — natural checkpoint once all three domains exist. |

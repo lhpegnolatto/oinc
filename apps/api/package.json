@@ -8,6 +8,7 @@
     ".": "./src/index.ts",
     "./appearance": "./src/shared/validation/appearance.ts",
     "./category-appearance": "./src/shared/validation/category-appearance.ts",
+    "./credit-card-appearance": "./src/shared/validation/credit-card-appearance.ts",
     "./wallet-appearance": "./src/shared/validation/wallet-appearance.ts"
   },
   "scripts": {

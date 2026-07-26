@@ -99,10 +99,13 @@ it SHALL reverse its effect on its wallet's `balance`.
 - **THEN** the request fails with a not-found error and the transaction is not deleted
 
 ### Requirement: A transaction can be logged without leaving the current screen
-`apps/web` SHALL provide a quick-add sheet for creating a transaction, reachable via a
-keyboard shortcut from anywhere in the private app, and via a visible quick-action
-affordance on the dashboard. Opening the sheet SHALL NOT navigate away from the current
-page.
+`apps/web` SHALL provide a quick-add sheet for creating a transaction against either a
+wallet or a credit card, reachable via a single keyboard shortcut from anywhere in the
+private app, and via a visible quick-action affordance on the dashboard. Selecting a
+credit card as the destination SHALL fix the transaction's `type` to `expense` and
+reveal a `pending`/`posted` status field; selecting a wallet SHALL show the
+income/expense choice and no status field. Opening the sheet SHALL NOT navigate away
+from the current page.
 
 #### Scenario: Keyboard shortcut opens the quick-add sheet from any private page
 - **WHEN** a signed-in user presses the transaction shortcut key while no input,
@@ -116,19 +119,41 @@ page.
 
 #### Scenario: Opening the sheet from a wallet's page pre-fills that wallet
 - **WHEN** a signed-in user opens the quick-add sheet (by shortcut) from `/wallets/[id]`
-- **THEN** the sheet's wallet field is pre-filled with that wallet, and remains
+- **THEN** the sheet's destination is pre-filled with that wallet, and remains
   changeable before submitting
 
-#### Scenario: Opening the sheet elsewhere requires picking a wallet
-- **WHEN** a signed-in user opens the quick-add sheet from a screen that isn't scoped to
-  a specific wallet
-- **THEN** the sheet's wallet field starts empty and must be filled in before the
-  transaction can be submitted
+#### Scenario: Opening the sheet from a credit card's page pre-fills that card
+- **WHEN** a signed-in user opens the quick-add sheet (by shortcut, or via the "Log
+  charge" affordance) from `/credit-cards/[id]`
+- **THEN** the sheet's destination is pre-filled with that credit card, and remains
+  changeable before submitting
 
-#### Scenario: Dashboard is the only page with a visible quick-add button
-- **WHEN** a signed-in user views a private page other than the dashboard
+#### Scenario: Opening the sheet elsewhere requires picking a destination
+- **WHEN** a signed-in user opens the quick-add sheet from a screen that isn't scoped to
+  a specific wallet or credit card
+- **THEN** the sheet's destination starts empty and must be filled in (a wallet or a
+  credit card) before the transaction can be submitted
+
+#### Scenario: Choosing a credit card destination fixes type and reveals status
+- **WHEN** a signed-in user selects a credit card as the destination in the quick-add
+  sheet
+- **THEN** the income/expense choice is replaced by a fixed `expense` type, and a
+  `pending`/`posted` status field appears
+
+#### Scenario: Choosing a wallet destination restores type and hides status
+- **WHEN** a signed-in user selects a wallet as the destination in the quick-add sheet
+- **THEN** the income/expense choice is available and no status field is shown
+
+#### Scenario: Dashboard is the only page with a generic, unscoped quick-add button
+- **WHEN** a signed-in user views a private page other than the dashboard, a wallet's
+  own page, or a credit card's own page
 - **THEN** there is no visible "Add transaction" button on that page, only the keyboard
   shortcut
+
+#### Scenario: A credit card's own page shows a button scoped to that card
+- **WHEN** a signed-in user views `/credit-cards/[id]`
+- **THEN** a visible "Log charge" button is present that opens the quick-add sheet with
+  that card pre-filled as the destination
 
 ### Requirement: A wallet's own page shows its transactions
 `apps/web` SHALL provide a `/wallets/[id]` page showing a wallet's details and its
@@ -149,7 +174,9 @@ transaction list. Wallet cards on `/wallets` SHALL link to this page.
 own, ordered by `date` descending, optionally filtered by `walletId`,
 `categoryId`, `type`, a date range (`dateFrom`/`dateTo`), a case-insensitive
 substring match against `note`, and optionally capped to a maximum number of results via
-`limit`. `apps/web` SHALL render this on a `/transactions` page.
+`limit`. `apps/web` SHALL render this on a `/transactions` page. Credit card charges
+(transactions attached to a card instead of a wallet — see the `credit-cards`
+capability) SHALL NOT appear in this list.
 
 #### Scenario: All-wallets list is scoped to the requesting user
 - **WHEN** a signed-in user requests their all-wallets transaction list
@@ -194,6 +221,12 @@ substring match against `note`, and optionally capped to a maximum number of res
 - **WHEN** a signed-in user applies a filter combination that matches no
   transactions
 - **THEN** the response is an empty list, not an error
+
+#### Scenario: Credit card charges never appear in the all-wallets list
+- **WHEN** a signed-in user has logged one or more charges against a credit card they
+  own, and requests the all-wallets transaction list with any combination of filters
+- **THEN** none of those card charges appear in the response, regardless of the
+  filters applied
 
 ### Requirement: Transaction list filters are reflected in the URL
 `apps/web` SHALL keep the `/transactions` page's active filters synced to the

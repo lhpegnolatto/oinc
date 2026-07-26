@@ -1077,4 +1077,814 @@ describe("transactions controller", () => {
       }
     });
   });
+
+  describe("credit card charges", () => {
+    async function createWalletTransactionFor(
+      headers: Headers,
+      walletId: string,
+      input: {
+        type: "income" | "expense";
+        amount: number;
+        categoryId: string;
+        date: string;
+        note?: string;
+      },
+    ) {
+      const res = await app.request(`/wallets/${walletId}/transactions`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(input),
+      });
+      return res.json();
+    }
+
+    async function createCard(
+      headers: Headers,
+      overrides: Partial<{
+        name: string;
+        balance: number;
+        statementCloseDay: number;
+        dueDay: number;
+      }> = {},
+    ) {
+      const res = await app.request("/credit-cards", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          name: "Card",
+          balance: 0,
+          statementCloseDay: 1,
+          dueDay: 15,
+          ...overrides,
+        }),
+      });
+      return res.json();
+    }
+
+    async function getCard(headers: Headers, cardId: string) {
+      const res = await app.request("/credit-cards", { headers });
+      const cards = await res.json();
+      // biome-ignore lint/suspicious/noExplicitAny: test helper over a JSON response
+      return cards.find((c: any) => c.id === cardId);
+    }
+
+    test("logging a charge increases the card's balance by the amount", async () => {
+      const { headers, cleanup } = await createSignedInUser(
+        "charges-increase-balance",
+      );
+      try {
+        const card = await createCard(headers, { balance: 100 });
+
+        const res = await app.request(`/credit-cards/${card.id}/charges`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            amount: 25,
+            categoryId: "system-food",
+            date: "2026-01-15",
+          }),
+        });
+        const body = await res.json();
+
+        expect(res.status).toBe(201);
+        expect(body.amount).toBe(25);
+        expect(body.cardId).toBe(card.id);
+        expect(body.walletId).toBeNull();
+
+        const updatedCard = await getCard(headers, card.id);
+        expect(updatedCard.balance).toBe(125);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    test("logging a charge without a status defaults to posted; explicit pending persists and still moves the balance", async () => {
+      const { headers, cleanup } = await createSignedInUser(
+        "charges-status-default",
+      );
+      try {
+        const card = await createCard(headers, { balance: 0 });
+
+        const defaultRes = await app.request(
+          `/credit-cards/${card.id}/charges`,
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              amount: 10,
+              categoryId: "system-food",
+              date: "2026-01-15",
+            }),
+          },
+        );
+        const defaultBody = await defaultRes.json();
+        expect(defaultBody.status).toBe("posted");
+
+        const pendingRes = await app.request(
+          `/credit-cards/${card.id}/charges`,
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              amount: 15,
+              categoryId: "system-food",
+              date: "2026-01-15",
+              status: "pending",
+            }),
+          },
+        );
+        const pendingBody = await pendingRes.json();
+        expect(pendingBody.status).toBe("pending");
+
+        const updatedCard = await getCard(headers, card.id);
+        expect(updatedCard.balance).toBe(25);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    test("logging a charge against another user's card fails, no charge is created, and no card balance changes", async () => {
+      const owner = await createSignedInUser("charges-cross-user-owner");
+      const attacker = await createSignedInUser("charges-cross-user-attacker");
+      try {
+        const card = await createCard(owner.headers, { balance: 50 });
+
+        const res = await app.request(`/credit-cards/${card.id}/charges`, {
+          method: "POST",
+          headers: attacker.headers,
+          body: JSON.stringify({
+            amount: 10,
+            categoryId: "system-food",
+            date: "2026-01-15",
+          }),
+        });
+        const body = await res.json();
+
+        expect(res.status).toBe(404);
+        expect(body.error.code).toBe("CREDIT_CARD_NOT_FOUND");
+
+        const unchangedCard = await getCard(owner.headers, card.id);
+        expect(unchangedCard.balance).toBe(50);
+      } finally {
+        await owner.cleanup();
+        await attacker.cleanup();
+      }
+    });
+
+    test("logging a charge with an income-type category is rejected", async () => {
+      const { headers, cleanup } = await createSignedInUser(
+        "charges-income-category",
+      );
+      try {
+        const card = await createCard(headers);
+
+        const res = await app.request(`/credit-cards/${card.id}/charges`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            amount: 10,
+            categoryId: "system-salary",
+            date: "2026-01-15",
+          }),
+        });
+        const body = await res.json();
+
+        expect(res.status).toBe(400);
+        expect(body.error.code).toBe("VALIDATION_ERROR");
+      } finally {
+        await cleanup();
+      }
+    });
+
+    test("logging a charge with a non-positive amount is rejected", async () => {
+      const { headers, cleanup } = await createSignedInUser(
+        "charges-non-positive-amount",
+      );
+      try {
+        const card = await createCard(headers);
+
+        const res = await app.request(`/credit-cards/${card.id}/charges`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            amount: 0,
+            categoryId: "system-food",
+            date: "2026-01-15",
+          }),
+        });
+
+        expect(res.status).toBe(400);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    test("editing a charge's amount adjusts the card's balance correctly", async () => {
+      const { headers, cleanup } = await createSignedInUser(
+        "charges-edit-amount",
+      );
+      try {
+        const card = await createCard(headers, { balance: 0 });
+
+        const chargeRes = await app.request(
+          `/credit-cards/${card.id}/charges`,
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              amount: 10,
+              categoryId: "system-food",
+              date: "2026-01-15",
+            }),
+          },
+        );
+        const charge = await chargeRes.json();
+
+        const updateRes = await app.request(`/transactions/${charge.id}`, {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({
+            cardId: card.id,
+            amount: 40,
+            categoryId: "system-food",
+            date: "2026-01-15",
+          }),
+        });
+        expect(updateRes.status).toBe(200);
+
+        const updatedCard = await getCard(headers, card.id);
+        expect(updatedCard.balance).toBe(40);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    test("moving a charge to a different owned card moves its balance effect", async () => {
+      const { headers, cleanup } = await createSignedInUser(
+        "charges-move-owned-card",
+      );
+      try {
+        const cardA = await createCard(headers, { balance: 0, name: "A" });
+        const cardB = await createCard(headers, { balance: 0, name: "B" });
+
+        const chargeRes = await app.request(
+          `/credit-cards/${cardA.id}/charges`,
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              amount: 20,
+              categoryId: "system-food",
+              date: "2026-01-15",
+            }),
+          },
+        );
+        const charge = await chargeRes.json();
+
+        const updateRes = await app.request(`/transactions/${charge.id}`, {
+          method: "PATCH",
+          headers,
+          body: JSON.stringify({
+            cardId: cardB.id,
+            amount: 20,
+            categoryId: "system-food",
+            date: "2026-01-15",
+          }),
+        });
+        expect(updateRes.status).toBe(200);
+
+        const updatedCardA = await getCard(headers, cardA.id);
+        const updatedCardB = await getCard(headers, cardB.id);
+        expect(updatedCardA.balance).toBe(0);
+        expect(updatedCardB.balance).toBe(20);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    test("moving a charge to a card the user doesn't own fails, and neither card's balance changes", async () => {
+      const owner = await createSignedInUser("charges-move-owner");
+      const attacker = await createSignedInUser("charges-move-attacker");
+      try {
+        const ownerCard = await createCard(owner.headers, { balance: 0 });
+        const attackerCard = await createCard(attacker.headers, {
+          balance: 0,
+        });
+
+        const chargeRes = await app.request(
+          `/credit-cards/${ownerCard.id}/charges`,
+          {
+            method: "POST",
+            headers: owner.headers,
+            body: JSON.stringify({
+              amount: 20,
+              categoryId: "system-food",
+              date: "2026-01-15",
+            }),
+          },
+        );
+        const charge = await chargeRes.json();
+
+        const updateRes = await app.request(`/transactions/${charge.id}`, {
+          method: "PATCH",
+          headers: owner.headers,
+          body: JSON.stringify({
+            cardId: attackerCard.id,
+            amount: 20,
+            categoryId: "system-food",
+            date: "2026-01-15",
+          }),
+        });
+        const updateBody = await updateRes.json();
+
+        expect(updateRes.status).toBe(404);
+        expect(updateBody.error.code).toBe("CREDIT_CARD_NOT_FOUND");
+
+        const unchangedOwnerCard = await getCard(owner.headers, ownerCard.id);
+        const unchangedAttackerCard = await getCard(
+          attacker.headers,
+          attackerCard.id,
+        );
+        expect(unchangedOwnerCard.balance).toBe(20);
+        expect(unchangedAttackerCard.balance).toBe(0);
+      } finally {
+        await owner.cleanup();
+        await attacker.cleanup();
+      }
+    });
+
+    test("deleting a charge reverses its balance effect", async () => {
+      const { headers, cleanup } = await createSignedInUser(
+        "charges-delete-reverses",
+      );
+      try {
+        const card = await createCard(headers, { balance: 0 });
+
+        const chargeRes = await app.request(
+          `/credit-cards/${card.id}/charges`,
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              amount: 30,
+              categoryId: "system-food",
+              date: "2026-01-15",
+            }),
+          },
+        );
+        const charge = await chargeRes.json();
+
+        const deleteRes = await app.request(`/transactions/${charge.id}`, {
+          method: "DELETE",
+          headers,
+        });
+        expect(deleteRes.status).toBe(204);
+
+        const updatedCard = await getCard(headers, card.id);
+        expect(updatedCard.balance).toBe(0);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    test("the all-wallets GET /transactions list never includes card charges, even when filters are applied", async () => {
+      const { headers, cleanup } = await createSignedInUser(
+        "charges-excluded-from-all-wallets",
+      );
+      try {
+        const walletRes = await app.request("/wallets", {
+          method: "POST",
+          headers,
+          body: JSON.stringify({ name: "Checking", balance: 0 }),
+        });
+        const wallet = await walletRes.json();
+        const card = await createCard(headers, { balance: 0 });
+
+        await createWalletTransactionFor(headers, wallet.id, {
+          type: "expense",
+          amount: 10,
+          categoryId: "system-food",
+          date: "2026-01-15",
+        });
+        await app.request(`/credit-cards/${card.id}/charges`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            amount: 10,
+            categoryId: "system-food",
+            date: "2026-01-15",
+          }),
+        });
+
+        const unfiltered = await app.request("/transactions", { headers });
+        const unfilteredBody = await unfiltered.json();
+        expect(unfilteredBody).toHaveLength(1);
+        expect(unfilteredBody[0].walletId).toBe(wallet.id);
+
+        const filtered = await app.request(
+          "/transactions?type=expense&categoryId=system-food",
+          { headers },
+        );
+        const filteredBody = await filtered.json();
+        expect(filteredBody).toHaveLength(1);
+        expect(filteredBody[0].walletId).toBe(wallet.id);
+      } finally {
+        await cleanup();
+      }
+    });
+  });
+
+  describe("installment plans", () => {
+    async function createCard(
+      headers: Headers,
+      overrides: Partial<{
+        name: string;
+        balance: number;
+        statementCloseDay: number;
+        dueDay: number;
+      }> = {},
+    ) {
+      const res = await app.request("/credit-cards", {
+        method: "POST",
+        headers,
+        body: JSON.stringify({
+          name: "Card",
+          balance: 0,
+          statementCloseDay: 1,
+          dueDay: 15,
+          ...overrides,
+        }),
+      });
+      return res.json();
+    }
+
+    async function getCard(headers: Headers, cardId: string) {
+      const res = await app.request("/credit-cards", { headers });
+      const cards = await res.json();
+      // biome-ignore lint/suspicious/noExplicitAny: test helper over a JSON response
+      return cards.find((c: any) => c.id === cardId);
+    }
+
+    async function getCharges(headers: Headers, cardId: string) {
+      const res = await app.request(`/credit-cards/${cardId}/charges`, {
+        headers,
+      });
+      return res.json();
+    }
+
+    test("splitting a charge into installments creates `count` charges dated one per month, sharing an installmentPlanId, and the card's balance increases by the full total", async () => {
+      const { headers, cleanup } =
+        await createSignedInUser("installments-basic");
+      try {
+        const card = await createCard(headers, { balance: 0 });
+
+        const res = await app.request(`/credit-cards/${card.id}/charges`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            amount: 300,
+            categoryId: "system-food",
+            date: "2026-01-15",
+            count: 3,
+          }),
+        });
+        const body = await res.json();
+
+        expect(res.status).toBe(201);
+        expect(Array.isArray(body)).toBe(true);
+        expect(body).toHaveLength(3);
+        const planId = body[0].installmentPlanId;
+        expect(planId).not.toBeNull();
+        // biome-ignore lint/suspicious/noExplicitAny: test helper over a JSON response
+        expect(body.every((c: any) => c.installmentPlanId === planId)).toBe(
+          true,
+        );
+        // biome-ignore lint/suspicious/noExplicitAny: test helper over a JSON response
+        expect(body.map((c: any) => c.installmentNumber)).toEqual([1, 2, 3]);
+        expect(
+          // biome-ignore lint/suspicious/noExplicitAny: test helper over a JSON response
+          body.every((c: any) => c.installmentCount === 3),
+        ).toBe(true);
+        // biome-ignore lint/suspicious/noExplicitAny: test helper over a JSON response
+        expect(body.map((c: any) => c.date)).toEqual([
+          "2026-01-15",
+          "2026-02-15",
+          "2026-03-15",
+        ]);
+
+        const updatedCard = await getCard(headers, card.id);
+        expect(updatedCard.balance).toBe(300);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    test("installment amounts sum exactly to the total when it doesn't divide evenly", async () => {
+      const { headers, cleanup } = await createSignedInUser(
+        "installments-remainder",
+      );
+      try {
+        const card = await createCard(headers, { balance: 0 });
+
+        const res = await app.request(`/credit-cards/${card.id}/charges`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            amount: 100,
+            categoryId: "system-food",
+            date: "2026-01-15",
+            count: 3,
+          }),
+        });
+        const body = await res.json();
+
+        expect(res.status).toBe(201);
+        expect(body[0].amount).toBe(33.33);
+        expect(body[1].amount).toBe(33.33);
+        expect(body[2].amount).toBe(33.34);
+
+        const updatedCard = await getCard(headers, card.id);
+        expect(updatedCard.balance).toBe(100);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    test("a count of 1 or omitted creates a single non-installment charge with no installmentPlanId", async () => {
+      const { headers, cleanup } = await createSignedInUser(
+        "installments-count-one",
+      );
+      try {
+        const card = await createCard(headers, { balance: 0 });
+
+        const omittedRes = await app.request(
+          `/credit-cards/${card.id}/charges`,
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              amount: 10,
+              categoryId: "system-food",
+              date: "2026-01-15",
+            }),
+          },
+        );
+        const omittedBody = await omittedRes.json();
+        expect(omittedRes.status).toBe(201);
+        expect(Array.isArray(omittedBody)).toBe(false);
+        expect(omittedBody.installmentPlanId).toBeNull();
+
+        const explicitRes = await app.request(
+          `/credit-cards/${card.id}/charges`,
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              amount: 10,
+              categoryId: "system-food",
+              date: "2026-01-15",
+              count: 1,
+            }),
+          },
+        );
+        const explicitBody = await explicitRes.json();
+        expect(explicitRes.status).toBe(201);
+        expect(Array.isArray(explicitBody)).toBe(false);
+        expect(explicitBody.installmentPlanId).toBeNull();
+      } finally {
+        await cleanup();
+      }
+    });
+
+    test("splitting a charge against another user's card fails, no charges are created, and no card balance changes", async () => {
+      const owner = await createSignedInUser("installments-cross-owner");
+      const attacker = await createSignedInUser("installments-cross-attacker");
+      try {
+        const card = await createCard(owner.headers, { balance: 50 });
+
+        const res = await app.request(`/credit-cards/${card.id}/charges`, {
+          method: "POST",
+          headers: attacker.headers,
+          body: JSON.stringify({
+            amount: 90,
+            categoryId: "system-food",
+            date: "2026-01-15",
+            count: 3,
+          }),
+        });
+        const body = await res.json();
+
+        expect(res.status).toBe(404);
+        expect(body.error.code).toBe("CREDIT_CARD_NOT_FOUND");
+
+        const unchangedCard = await getCard(owner.headers, card.id);
+        expect(unchangedCard.balance).toBe(50);
+
+        const charges = await getCharges(owner.headers, card.id);
+        expect(charges).toHaveLength(0);
+      } finally {
+        await owner.cleanup();
+        await attacker.cleanup();
+      }
+    });
+
+    test("splitting a charge with a non-expense category fails, no charges are created", async () => {
+      const { headers, cleanup } = await createSignedInUser(
+        "installments-bad-category",
+      );
+      try {
+        const card = await createCard(headers, { balance: 0 });
+
+        const res = await app.request(`/credit-cards/${card.id}/charges`, {
+          method: "POST",
+          headers,
+          body: JSON.stringify({
+            amount: 90,
+            categoryId: "system-salary",
+            date: "2026-01-15",
+            count: 3,
+          }),
+        });
+        const body = await res.json();
+
+        expect(res.status).toBe(400);
+        expect(body.error.code).toBe("VALIDATION_ERROR");
+
+        const charges = await getCharges(headers, card.id);
+        expect(charges).toHaveLength(0);
+
+        const unchangedCard = await getCard(headers, card.id);
+        expect(unchangedCard.balance).toBe(0);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    test("splitting a charge with a non-positive total or an invalid count fails, no charges are created", async () => {
+      const { headers, cleanup } = await createSignedInUser(
+        "installments-invalid-input",
+      );
+      try {
+        const card = await createCard(headers, { balance: 0 });
+
+        const nonPositiveRes = await app.request(
+          `/credit-cards/${card.id}/charges`,
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              amount: 0,
+              categoryId: "system-food",
+              date: "2026-01-15",
+              count: 3,
+            }),
+          },
+        );
+        expect(nonPositiveRes.status).toBe(400);
+
+        const invalidCountRes = await app.request(
+          `/credit-cards/${card.id}/charges`,
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              amount: 90,
+              categoryId: "system-food",
+              date: "2026-01-15",
+              count: 0,
+            }),
+          },
+        );
+        expect(invalidCountRes.status).toBe(400);
+
+        const charges = await getCharges(headers, card.id);
+        expect(charges).toHaveLength(0);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    test("deleting an installment and its remaining siblings removes them and reverses their balance effect, leaving earlier installments untouched", async () => {
+      const { headers, cleanup } = await createSignedInUser(
+        "installments-delete-remaining",
+      );
+      try {
+        const card = await createCard(headers, { balance: 0 });
+
+        const createRes = await app.request(
+          `/credit-cards/${card.id}/charges`,
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              amount: 300,
+              categoryId: "system-food",
+              date: "2026-01-15",
+              count: 3,
+            }),
+          },
+        );
+        const charges = await createRes.json();
+        const [first, second] = charges;
+
+        const deleteRes = await app.request(
+          `/transactions/${second.id}/remaining-installments`,
+          { method: "DELETE", headers },
+        );
+        expect(deleteRes.status).toBe(204);
+
+        const remaining = await getCharges(headers, card.id);
+        expect(remaining).toHaveLength(1);
+        expect(remaining[0].id).toBe(first.id);
+
+        const updatedCard = await getCard(headers, card.id);
+        expect(updatedCard.balance).toBe(first.amount);
+      } finally {
+        await cleanup();
+      }
+    });
+
+    test("deleting another user's installment plan fails, nothing removed, no balance changes", async () => {
+      const owner = await createSignedInUser("installments-delete-cross-owner");
+      const attacker = await createSignedInUser(
+        "installments-delete-cross-attacker",
+      );
+      try {
+        const card = await createCard(owner.headers, { balance: 0 });
+        const createRes = await app.request(
+          `/credit-cards/${card.id}/charges`,
+          {
+            method: "POST",
+            headers: owner.headers,
+            body: JSON.stringify({
+              amount: 200,
+              categoryId: "system-food",
+              date: "2026-01-15",
+              count: 2,
+            }),
+          },
+        );
+        const charges = await createRes.json();
+
+        const res = await app.request(
+          `/transactions/${charges[0].id}/remaining-installments`,
+          { method: "DELETE", headers: attacker.headers },
+        );
+        const body = await res.json();
+
+        expect(res.status).toBe(404);
+        expect(body.error.code).toBe("TRANSACTION_NOT_FOUND");
+
+        const remaining = await getCharges(owner.headers, card.id);
+        expect(remaining).toHaveLength(2);
+
+        const unchangedCard = await getCard(owner.headers, card.id);
+        expect(unchangedCard.balance).toBe(200);
+      } finally {
+        await owner.cleanup();
+        await attacker.cleanup();
+      }
+    });
+
+    test("the existing single-charge DELETE /transactions/:id still deletes only that one row when it belongs to an installment plan", async () => {
+      const { headers, cleanup } = await createSignedInUser(
+        "installments-single-delete",
+      );
+      try {
+        const card = await createCard(headers, { balance: 0 });
+        const createRes = await app.request(
+          `/credit-cards/${card.id}/charges`,
+          {
+            method: "POST",
+            headers,
+            body: JSON.stringify({
+              amount: 300,
+              categoryId: "system-food",
+              date: "2026-01-15",
+              count: 3,
+            }),
+          },
+        );
+        const charges = await createRes.json();
+
+        const deleteRes = await app.request(`/transactions/${charges[1].id}`, {
+          method: "DELETE",
+          headers,
+        });
+        expect(deleteRes.status).toBe(204);
+
+        const remaining = await getCharges(headers, card.id);
+        expect(remaining).toHaveLength(2);
+        // biome-ignore lint/suspicious/noExplicitAny: test helper over a JSON response
+        expect(remaining.map((c: any) => c.id).sort()).toEqual(
+          [charges[0].id, charges[2].id].sort(),
+        );
+
+        const updatedCard = await getCard(headers, card.id);
+        expect(updatedCard.balance).toBe(200);
+      } finally {
+        await cleanup();
+      }
+    });
+  });
 });

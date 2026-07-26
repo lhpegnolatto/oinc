@@ -27,6 +27,7 @@ export async function createTransaction(
 
   const created = await repo.createWithBalanceUpdate({
     id: crypto.randomUUID(),
+    status: null,
     ...input,
   });
   if (!created) {

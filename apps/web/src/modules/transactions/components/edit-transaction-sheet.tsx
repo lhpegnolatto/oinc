@@ -52,10 +52,19 @@ export function EditTransactionSheet({
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionFormSchema),
     values: {
+      // destination/status/count aren't editable here — this component only
+      // ever renders for wallet-scoped transactions (see below), the
+      // credit-card equivalent is credit-cards' EditChargeSheet.
+      destination: "wallet",
       type: transaction.type,
       amount: transaction.amount,
       categoryId: transaction.categoryId,
-      walletId: transaction.walletId,
+      // TransactionDto's walletId is nullable at the type level only
+      // because the destination union also covers credit card charges —
+      // this component only ever renders for wallet-scoped transactions.
+      walletId: transaction.walletId as string,
+      status: "posted",
+      count: 1,
       date: transaction.date,
       note: transaction.note ?? "",
     },
@@ -67,8 +76,13 @@ export function EditTransactionSheet({
     mutation.mutate(
       {
         id: transaction.id,
-        previousWalletId: transaction.walletId,
-        ...values,
+        previousWalletId: transaction.walletId as string,
+        walletId: values.walletId as string,
+        type: values.type,
+        amount: values.amount,
+        categoryId: values.categoryId,
+        date: values.date,
+        note: values.note,
       },
       { onSuccess: () => onOpenChange(false) },
     );

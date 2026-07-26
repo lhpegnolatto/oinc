@@ -50,7 +50,14 @@ export function DeleteTransactionDialog({
             disabled={mutation.isPending}
             onClick={() =>
               mutation.mutate(
-                { id: transaction.id, walletId: transaction.walletId },
+                // TransactionDto's walletId is nullable at the type level
+                // only because the destination union also covers credit
+                // card charges — this dialog only ever renders for
+                // wallet-scoped transactions.
+                {
+                  id: transaction.id,
+                  walletId: transaction.walletId as string,
+                },
                 { onSuccess: onDeleted },
               )
             }

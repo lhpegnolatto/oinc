@@ -1,6 +1,7 @@
 "use client";
 
 import { zodResolver } from "@hookform/resolvers/zod";
+import type { CreditCardIconKey } from "@oinc/api/credit-card-appearance";
 import type { WalletIconKey } from "@oinc/api/wallet-appearance";
 import { useEffect } from "react";
 import { useForm } from "react-hook-form";
@@ -28,6 +29,9 @@ import {
   SheetHeader,
   SheetTitle,
 } from "@/components/ui/sheet";
+import { useCreateCardChargeMutation } from "@/modules/credit-cards/hooks/use-create-card-charge-mutation";
+import { useCreditCardsQuery } from "@/modules/credit-cards/hooks/use-credit-cards-query";
+import { CREDIT_CARD_ICON_COMPONENTS } from "@/modules/credit-cards/lib/credit-card-icons";
 import { useWalletsQuery } from "@/modules/wallets/hooks/use-wallets-query";
 import { WALLET_ICON_COMPONENTS } from "@/modules/wallets/lib/wallet-icons";
 import { useCreateTransactionMutation } from "../hooks/use-create-transaction-mutation";
@@ -41,12 +45,20 @@ function todayIsoDate() {
   return new Date().toISOString().slice(0, 10);
 }
 
-function defaultValues(defaultWalletId?: string): TransactionFormValues {
+function defaultValues(defaults?: {
+  walletId?: string;
+  cardId?: string;
+}): TransactionFormValues {
+  const destination = defaults?.cardId ? "creditCard" : "wallet";
   return {
+    destination,
     type: "expense",
     amount: 0,
     categoryId: "",
-    walletId: defaultWalletId ?? "",
+    walletId: defaults?.walletId ?? "",
+    cardId: defaults?.cardId ?? "",
+    status: "posted",
+    count: 1,
     date: todayIsoDate(),
     note: "",
   };
@@ -54,35 +66,73 @@ function defaultValues(defaultWalletId?: string): TransactionFormValues {
 
 // Reachable via both a visible "Add transaction" button and the global "n"
 // shortcut (see QuickAddTransactionProvider) — opening it never navigates
-// away from the current page.
+// away from the current page. Handles both destinations (wallet or credit
+// card) in one sheet — see design.md Decision 1.
 export function QuickAddTransactionSheet({
   open,
   onOpenChange,
   defaultWalletId,
+  defaultCardId,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   defaultWalletId?: string;
+  defaultCardId?: string;
 }) {
   const { data: wallets } = useWalletsQuery();
-  const mutation = useCreateTransactionMutation();
+  const { data: cards } = useCreditCardsQuery();
+  const createTransaction = useCreateTransactionMutation();
+  const createCardCharge = useCreateCardChargeMutation();
   const form = useForm<TransactionFormValues>({
     resolver: zodResolver(transactionFormSchema),
-    defaultValues: defaultValues(defaultWalletId),
+    defaultValues: defaultValues({
+      walletId: defaultWalletId,
+      cardId: defaultCardId,
+    }),
   });
 
-  // Re-baseline every time the sheet opens (or the wallet it's scoped to
-  // changes) so a previous submission never leaks into the next one.
+  // Re-baseline every time the sheet opens (or what it's scoped to changes)
+  // so a previous submission never leaks into the next one.
   useEffect(() => {
     if (open) {
-      form.reset(defaultValues(defaultWalletId));
+      form.reset(
+        defaultValues({ walletId: defaultWalletId, cardId: defaultCardId }),
+      );
     }
-  }, [open, defaultWalletId, form.reset]);
+  }, [open, defaultWalletId, defaultCardId, form.reset]);
 
+  const destination = form.watch("destination");
   const type = form.watch("type");
+  const isPending = createTransaction.isPending || createCardCharge.isPending;
 
   function onSubmit(values: TransactionFormValues) {
-    mutation.mutate(values, { onSuccess: () => onOpenChange(false) });
+    if (values.destination === "wallet") {
+      createTransaction.mutate(
+        {
+          walletId: values.walletId as string,
+          type: values.type,
+          amount: values.amount,
+          categoryId: values.categoryId,
+          date: values.date,
+          note: values.note,
+        },
+        { onSuccess: () => onOpenChange(false) },
+      );
+      return;
+    }
+
+    createCardCharge.mutate(
+      {
+        cardId: values.cardId as string,
+        amount: values.amount,
+        categoryId: values.categoryId,
+        date: values.date,
+        note: values.note,
+        status: values.status,
+        count: values.count,
+      },
+      { onSuccess: () => onOpenChange(false) },
+    );
   }
 
   return (
@@ -95,37 +145,80 @@ export function QuickAddTransactionSheet({
           <SheetHeader>
             <SheetTitle>Add transaction</SheetTitle>
             <SheetDescription>
-              Log money moving in or out of a wallet.
+              Log money moving in or out of a wallet or credit card.
             </SheetDescription>
           </SheetHeader>
           <FieldGroup className="flex-1 overflow-y-auto px-4">
             <Field>
-              <FieldLabel>Type</FieldLabel>
+              <FieldLabel>Destination</FieldLabel>
               <div className="flex gap-2">
                 <Button
                   type="button"
-                  variant={type === "expense" ? "default" : "outline"}
+                  variant={destination === "wallet" ? "default" : "outline"}
                   className="flex-1"
                   onClick={() => {
+                    form.setValue("destination", "wallet", {
+                      shouldValidate: true,
+                    });
                     form.setValue("type", "expense", { shouldValidate: true });
                     form.setValue("categoryId", "", { shouldValidate: true });
                   }}
                 >
-                  Expense
+                  Wallet
                 </Button>
                 <Button
                   type="button"
-                  variant={type === "income" ? "default" : "outline"}
+                  variant={destination === "creditCard" ? "default" : "outline"}
                   className="flex-1"
                   onClick={() => {
-                    form.setValue("type", "income", { shouldValidate: true });
+                    form.setValue("destination", "creditCard", {
+                      shouldValidate: true,
+                    });
+                    form.setValue("type", "expense", { shouldValidate: true });
                     form.setValue("categoryId", "", { shouldValidate: true });
                   }}
                 >
-                  Income
+                  Credit Card
                 </Button>
               </div>
             </Field>
+            {destination === "wallet" && (
+              <Field>
+                <FieldLabel>Type</FieldLabel>
+                <div className="flex gap-2">
+                  <Button
+                    type="button"
+                    variant={type === "expense" ? "default" : "outline"}
+                    className="flex-1"
+                    onClick={() => {
+                      form.setValue("type", "expense", {
+                        shouldValidate: true,
+                      });
+                      form.setValue("categoryId", "", {
+                        shouldValidate: true,
+                      });
+                    }}
+                  >
+                    Expense
+                  </Button>
+                  <Button
+                    type="button"
+                    variant={type === "income" ? "default" : "outline"}
+                    className="flex-1"
+                    onClick={() => {
+                      form.setValue("type", "income", {
+                        shouldValidate: true,
+                      });
+                      form.setValue("categoryId", "", {
+                        shouldValidate: true,
+                      });
+                    }}
+                  >
+                    Income
+                  </Button>
+                </div>
+              </Field>
+            )}
             <Field data-invalid={!!form.formState.errors.amount}>
               <FieldLabel htmlFor="quick-add-amount">Amount</FieldLabel>
               <Input
@@ -150,44 +243,141 @@ export function QuickAddTransactionSheet({
               />
               <FieldError errors={[form.formState.errors.categoryId]} />
             </Field>
-            <Field data-invalid={!!form.formState.errors.walletId}>
-              <FieldLabel>Wallet</FieldLabel>
-              <Select
-                value={form.watch("walletId") || null}
-                onValueChange={(next) =>
-                  form.setValue("walletId", next ?? "", {
-                    shouldValidate: true,
-                  })
-                }
-              >
-                <SelectTrigger className="w-full">
-                  <SelectValue placeholder="Select a wallet">
-                    {(selected: string | null) =>
-                      (wallets ?? []).find((wallet) => wallet.id === selected)
-                        ?.name
-                    }
-                  </SelectValue>
-                </SelectTrigger>
-                <SelectContent>
-                  {(wallets ?? []).map((wallet) => {
-                    const Icon =
-                      WALLET_ICON_COMPONENTS[wallet.icon as WalletIconKey];
-                    return (
-                      <SelectItem key={wallet.id} value={wallet.id}>
-                        <span
-                          className="flex size-5 shrink-0 items-center justify-center rounded-full"
-                          style={{ backgroundColor: wallet.color }}
-                        >
-                          <Icon className="size-3 text-white" />
-                        </span>
-                        {wallet.name}
-                      </SelectItem>
-                    );
-                  })}
-                </SelectContent>
-              </Select>
-              <FieldError errors={[form.formState.errors.walletId]} />
-            </Field>
+            {destination === "wallet" ? (
+              <Field data-invalid={!!form.formState.errors.walletId}>
+                <FieldLabel>Wallet</FieldLabel>
+                <Select
+                  value={form.watch("walletId") || null}
+                  onValueChange={(next) =>
+                    form.setValue("walletId", next ?? "", {
+                      shouldValidate: true,
+                    })
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a wallet">
+                      {(selected: string | null) =>
+                        (wallets ?? []).find((wallet) => wallet.id === selected)
+                          ?.name
+                      }
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(wallets ?? []).map((wallet) => {
+                      const Icon =
+                        WALLET_ICON_COMPONENTS[wallet.icon as WalletIconKey];
+                      return (
+                        <SelectItem key={wallet.id} value={wallet.id}>
+                          <span
+                            className="flex size-5 shrink-0 items-center justify-center rounded-full"
+                            style={{ backgroundColor: wallet.color }}
+                          >
+                            <Icon className="size-3 text-white" />
+                          </span>
+                          {wallet.name}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                <FieldError errors={[form.formState.errors.walletId]} />
+              </Field>
+            ) : (
+              <Field data-invalid={!!form.formState.errors.cardId}>
+                <FieldLabel>Card</FieldLabel>
+                <Select
+                  value={form.watch("cardId") || null}
+                  onValueChange={(next) =>
+                    form.setValue("cardId", next ?? "", {
+                      shouldValidate: true,
+                    })
+                  }
+                >
+                  <SelectTrigger className="w-full">
+                    <SelectValue placeholder="Select a card">
+                      {(selected: string | null) =>
+                        (cards ?? []).find((card) => card.id === selected)?.name
+                      }
+                    </SelectValue>
+                  </SelectTrigger>
+                  <SelectContent>
+                    {(cards ?? []).map((card) => {
+                      const Icon =
+                        CREDIT_CARD_ICON_COMPONENTS[
+                          card.icon as CreditCardIconKey
+                        ];
+                      return (
+                        <SelectItem key={card.id} value={card.id}>
+                          <span
+                            className="flex size-5 shrink-0 items-center justify-center rounded-full"
+                            style={{ backgroundColor: card.color }}
+                          >
+                            <Icon className="size-3 text-white" />
+                          </span>
+                          {card.name}
+                        </SelectItem>
+                      );
+                    })}
+                  </SelectContent>
+                </Select>
+                <FieldError errors={[form.formState.errors.cardId]} />
+              </Field>
+            )}
+            {destination === "creditCard" && (
+              <>
+                <Field>
+                  <FieldLabel>Status</FieldLabel>
+                  <div className="flex gap-2">
+                    <Button
+                      type="button"
+                      variant={
+                        form.watch("status") === "posted"
+                          ? "default"
+                          : "outline"
+                      }
+                      className="flex-1"
+                      onClick={() =>
+                        form.setValue("status", "posted", {
+                          shouldValidate: true,
+                        })
+                      }
+                    >
+                      Posted
+                    </Button>
+                    <Button
+                      type="button"
+                      variant={
+                        form.watch("status") === "pending"
+                          ? "default"
+                          : "outline"
+                      }
+                      className="flex-1"
+                      onClick={() =>
+                        form.setValue("status", "pending", {
+                          shouldValidate: true,
+                        })
+                      }
+                    >
+                      Pending
+                    </Button>
+                  </div>
+                </Field>
+                <Field data-invalid={!!form.formState.errors.count}>
+                  <FieldLabel htmlFor="quick-add-count">
+                    Installments
+                  </FieldLabel>
+                  <Input
+                    id="quick-add-count"
+                    type="number"
+                    step="1"
+                    min="1"
+                    aria-invalid={!!form.formState.errors.count}
+                    {...form.register("count", { valueAsNumber: true })}
+                  />
+                  <FieldError errors={[form.formState.errors.count]} />
+                </Field>
+              </>
+            )}
             <Field data-invalid={!!form.formState.errors.date}>
               <FieldLabel htmlFor="quick-add-date">Date</FieldLabel>
               <Input
@@ -211,7 +401,7 @@ export function QuickAddTransactionSheet({
             <SheetClose render={<Button type="button" variant="outline" />}>
               Cancel
             </SheetClose>
-            <Button type="submit" disabled={mutation.isPending}>
+            <Button type="submit" disabled={isPending}>
               Add transaction
             </Button>
           </SheetFooter>

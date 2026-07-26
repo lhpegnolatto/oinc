@@ -6,6 +6,7 @@ import { useKeyboardShortcut } from "@/hooks/use-keyboard-shortcut";
 import { QuickAddTransactionSheet } from "./quick-add-transaction-sheet";
 
 const WALLET_PAGE_PATTERN = /^\/wallets\/([^/]+)$/;
+const CREDIT_CARD_PAGE_PATTERN = /^\/credit-cards\/([^/]+)$/;
 
 const QuickAddTransactionContext = createContext<{
   open: () => void;
@@ -24,7 +25,9 @@ export function useQuickAddTransaction() {
 // Mounted once in the private shell (app/(private)/layout.tsx) — owns the
 // sheet's open state so both a visible "Add transaction" button (anywhere
 // under this provider) and the global "n" shortcut open the same sheet
-// instance, pre-filled with the current wallet when on /wallets/[id].
+// instance, pre-filled with the current wallet on /wallets/[id] or the
+// current credit card on /credit-cards/[id] (design.md Decision 1 — this
+// replaced the credit-cards-core-era QuickAddChargeProvider/"c" shortcut).
 export function QuickAddTransactionProvider({
   children,
 }: {
@@ -33,7 +36,9 @@ export function QuickAddTransactionProvider({
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const walletMatch = pathname.match(WALLET_PAGE_PATTERN);
+  const cardMatch = pathname.match(CREDIT_CARD_PAGE_PATTERN);
   const defaultWalletId = walletMatch?.[1];
+  const defaultCardId = cardMatch?.[1];
 
   useKeyboardShortcut("n", () => setOpen(true));
 
@@ -44,6 +49,7 @@ export function QuickAddTransactionProvider({
         open={open}
         onOpenChange={setOpen}
         defaultWalletId={defaultWalletId}
+        defaultCardId={defaultCardId}
       />
     </QuickAddTransactionContext.Provider>
   );

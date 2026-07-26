@@ -18,6 +18,21 @@ async function createWallet(
   await expect(page.getByText(name, { exact: true })).toBeVisible();
 }
 
+async function createCard(
+  page: import("@playwright/test").Page,
+  name: string,
+  balance: string,
+) {
+  await page.goto("/credit-cards");
+  await page.getByRole("button", { name: "Add credit card" }).click();
+  await page.getByLabel("Name", { exact: true }).fill(name);
+  await page.getByLabel("Starting balance", { exact: true }).fill(balance);
+  await page.getByLabel("Statement close day", { exact: true }).fill("1");
+  await page.getByLabel("Due day", { exact: true }).fill("15");
+  await page.getByRole("button", { name: "Create", exact: true }).click();
+  await expect(page.getByText(name, { exact: true })).toBeVisible();
+}
+
 test.describe("transactions", () => {
   // These flows share one dev Next.js server + one apps/api server (see
   // playwright.config.ts's webServer) and each does several sequential
@@ -216,5 +231,103 @@ test.describe("transactions", () => {
     await expect(
       page.getByRole("dialog", { name: "Add transaction" }),
     ).toBeVisible();
+  });
+});
+
+test.describe("quick-add sheet: credit card destination", () => {
+  // Same rationale as the outer describe's serial mode — see its comment.
+  test.describe.configure({ mode: "serial" });
+
+  let userId: string;
+
+  test.beforeEach(async ({ context }) => {
+    const seeded = await seedSignedInUser(
+      "Ada Lovelace",
+      `transactions-card-e2e-${crypto.randomUUID()}@example.com`,
+    );
+    userId = seeded.userId;
+    await context.addCookies(cookieHeaderToPlaywrightCookies(seeded.cookie));
+  });
+
+  test.afterEach(async () => {
+    await deleteSeededUser(userId);
+  });
+
+  test("choosing the credit card destination fixes type to expense and reveals status/installments; choosing wallet restores them", async ({
+    page,
+  }) => {
+    await page.goto("/dashboard");
+    await page.keyboard.press("n");
+    await expect(
+      page.getByRole("dialog", { name: "Add transaction" }),
+    ).toBeVisible();
+
+    // Wallet is the default destination.
+    await expect(page.getByRole("button", { name: "Expense" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Posted" }),
+    ).not.toBeVisible();
+
+    await page.getByRole("button", { name: "Credit Card" }).click();
+    await expect(
+      page.getByRole("button", { name: "Expense" }),
+    ).not.toBeVisible();
+    await expect(page.getByRole("button", { name: "Posted" })).toBeVisible();
+    await expect(page.getByLabel("Installments")).toBeVisible();
+
+    await page.getByRole("button", { name: "Wallet" }).click();
+    await expect(page.getByRole("button", { name: "Expense" })).toBeVisible();
+    await expect(
+      page.getByRole("button", { name: "Posted" }),
+    ).not.toBeVisible();
+  });
+
+  test("logging a charge against a credit card from the unified sheet updates its balance and appears in the list", async ({
+    page,
+  }) => {
+    await createCard(page, "Rewards", "0");
+    await page.goto("/credit-cards");
+    await page.getByText("Rewards", { exact: true }).click();
+    await expect(page).toHaveURL(/\/credit-cards\/[^/]+$/);
+
+    await page.getByRole("button", { name: "Log charge" }).first().click();
+    await expect(page.getByRole("combobox").last()).toContainText("Rewards");
+
+    await page.getByLabel("Amount").fill("40");
+    await page.getByRole("combobox").first().click();
+    await page.getByRole("option", { name: "Food & Dining" }).click();
+    await page
+      .getByRole("dialog")
+      .getByRole("button", { name: "Add transaction" })
+      .click();
+    await expect(page.getByRole("dialog")).not.toBeVisible({ timeout: 10000 });
+
+    await expect(page.getByText("Food & Dining")).toBeVisible();
+    await expect(page.getByText("-$40.00", { exact: true })).toBeVisible();
+  });
+
+  test("pressing the shortcut key from a credit card's page pre-fills that card, and it stays changeable", async ({
+    page,
+  }) => {
+    await createCard(page, "Travel", "0");
+    await createCard(page, "Rewards", "0");
+    await page.goto("/credit-cards");
+    await page.getByText("Travel", { exact: true }).click();
+    await expect(page).toHaveURL(/\/credit-cards\/[^/]+$/);
+
+    await page.keyboard.press("n");
+    await expect(page.getByRole("combobox").last()).toContainText("Travel");
+
+    await page.getByRole("combobox").last().click();
+    await page.getByRole("option", { name: "Rewards" }).click();
+    await expect(page.getByRole("combobox").last()).toContainText("Rewards");
+  });
+
+  test("the removed `c` shortcut no longer opens anything", async ({
+    page,
+  }) => {
+    await page.goto("/dashboard");
+    await page.keyboard.press("c");
+    await expect(page.getByRole("dialog")).not.toBeVisible();
   });
 });

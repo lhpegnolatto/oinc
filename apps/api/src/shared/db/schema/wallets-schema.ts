@@ -1,6 +1,7 @@
 import { relations } from "drizzle-orm";
 import { index, numeric, pgTable, text, timestamp } from "drizzle-orm/pg-core";
 import { user } from "./auth-schema";
+import { creditCardPayment } from "./credit-card-payments-schema";
 import { transaction } from "./transactions-schema";
 
 export const wallet = pgTable(
@@ -33,4 +34,5 @@ export const walletRelations = relations(wallet, ({ one, many }) => ({
     references: [user.id],
   }),
   transactions: many(transaction),
+  creditCardPayments: many(creditCardPayment),
 }));
