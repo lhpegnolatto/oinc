@@ -2,6 +2,7 @@ export * from "./auth-schema";
 export * from "./categories-schema";
 export * from "./credit-card-payments-schema";
 export * from "./credit-cards-schema";
+export * from "./investments-schema";
 export * from "./transaction-status-enum";
 export * from "./transaction-type-enum";
 export * from "./transactions-schema";

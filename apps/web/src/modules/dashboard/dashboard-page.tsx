@@ -29,10 +29,18 @@ export function DashboardPage() {
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold">Dashboard</h1>
-        <Button onClick={open}>
-          <PlusIcon data-icon="inline-start" />
-          Add transaction
-        </Button>
+        <div className="flex items-center gap-2">
+          <Link
+            href="/investments"
+            className={buttonVariants({ variant: "outline" })}
+          >
+            Investments
+          </Link>
+          <Button onClick={open}>
+            <PlusIcon data-icon="inline-start" />
+            Add transaction
+          </Button>
+        </div>
       </div>
 
       <div className="grid gap-6 lg:grid-cols-2">

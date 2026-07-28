@@ -4,6 +4,7 @@ import {
   type LucideIcon,
   ReceiptIcon,
   TagIcon,
+  TrendingUpIcon,
   WalletIcon,
 } from "lucide-react";
 
@@ -19,6 +20,7 @@ export const navItems: NavItem[] = [
   { title: "Dashboard", url: "/dashboard", icon: LayoutDashboardIcon },
   { title: "Wallets", url: "/wallets", icon: WalletIcon },
   { title: "Credit Cards", url: "/credit-cards", icon: CreditCardIcon },
+  { title: "Investments", url: "/investments", icon: TrendingUpIcon },
   {
     title: "Transactions",
     url: "/transactions",
