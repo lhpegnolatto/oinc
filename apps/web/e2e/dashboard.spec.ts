@@ -18,6 +18,34 @@ async function createWallet(
   await expect(page.getByText(name, { exact: true })).toBeVisible();
 }
 
+async function createCard(
+  page: import("@playwright/test").Page,
+  name: string,
+  balance: string,
+) {
+  await page.goto("/credit-cards");
+  await page.getByRole("button", { name: "Add credit card" }).click();
+  await page.getByLabel("Name", { exact: true }).fill(name);
+  await page.getByLabel("Starting balance", { exact: true }).fill(balance);
+  await page.getByLabel("Statement close day", { exact: true }).fill("1");
+  await page.getByLabel("Due day", { exact: true }).fill("15");
+  await page.getByRole("button", { name: "Create", exact: true }).click();
+  await expect(page.getByText(name, { exact: true })).toBeVisible();
+}
+
+async function createHolding(
+  page: import("@playwright/test").Page,
+  name: string,
+  currentValue: string,
+) {
+  await page.goto("/investments");
+  await page.getByRole("button", { name: "Add holding" }).click();
+  await page.getByLabel("Name", { exact: true }).fill(name);
+  await page.getByLabel("Current value", { exact: true }).fill(currentValue);
+  await page.getByRole("button", { name: "Create", exact: true }).click();
+  await expect(page.getByText(name, { exact: true })).toBeVisible();
+}
+
 async function logTransaction(
   page: import("@playwright/test").Page,
   input: {
@@ -83,7 +111,7 @@ test.describe("dashboard (/dashboard)", () => {
 
     await page.goto("/dashboard");
 
-    await expect(page.getByText("$80.00", { exact: true })).toBeVisible();
+    await expect(page.getByTestId("net-worth-headline")).toHaveText("$80.00");
     await expect(page.getByText("Checking", { exact: true })).toBeVisible();
     await expect(
       page.getByText("Overdrawn", { exact: true }),
@@ -223,5 +251,56 @@ test.describe("dashboard (/dashboard)", () => {
       page.getByRole("dialog", { name: "Add transaction" }),
     ).toBeVisible();
     await expect(page).toHaveURL(/\/dashboard$/);
+  });
+
+  test("net worth combines wallets, investments, and credit card balances", async ({
+    page,
+  }) => {
+    await createWallet(page, "Checking", "100");
+    await createWallet(page, "Savings", "30");
+    await createHolding(page, "S&P 500 ETF", "500");
+    await createCard(page, "Rewards Card", "80");
+
+    await page.goto("/dashboard");
+
+    await expect(page.getByTestId("net-worth-headline")).toHaveText("$550.00");
+  });
+
+  test("the breakdown chart shows wallet and investment slices but never a credit card slice", async ({
+    page,
+  }) => {
+    await createWallet(page, "Checking", "100");
+    await createHolding(page, "S&P 500 ETF", "500");
+    await createCard(page, "Rewards Card", "80");
+
+    await page.goto("/dashboard");
+
+    await expect(page.getByText("Checking", { exact: true })).toBeVisible();
+    await expect(page.getByText("S&P 500 ETF", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText("Rewards Card", { exact: true }),
+    ).not.toBeVisible();
+  });
+
+  test("the net-worth summary shows the wallets, investments, and credit card totals as separate labeled values", async ({
+    page,
+  }) => {
+    await createWallet(page, "Checking", "130");
+    await createHolding(page, "S&P 500 ETF", "500");
+    await createCard(page, "Rewards Card", "80");
+
+    await page.goto("/dashboard");
+
+    const summary = page.getByTestId("net-worth-summary");
+    await expect(summary.getByText("Wallets", { exact: true })).toBeVisible();
+    await expect(
+      summary.getByText("Investments", { exact: true }),
+    ).toBeVisible();
+    await expect(
+      summary.getByText("Card balances", { exact: true }),
+    ).toBeVisible();
+    await expect(summary.getByText("$130.00", { exact: true })).toBeVisible();
+    await expect(summary.getByText("$500.00", { exact: true })).toBeVisible();
+    await expect(summary.getByText("$80.00", { exact: true })).toBeVisible();
   });
 });

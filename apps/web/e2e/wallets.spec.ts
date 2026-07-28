@@ -73,7 +73,7 @@ test.describe("wallets", () => {
 
     await expect(page.getByText("$100.00", { exact: true })).toBeVisible();
     await expect(page.getByText("$50.00", { exact: true })).toBeVisible();
-    await expect(page.getByText("Net worth")).toBeVisible();
+    await expect(page.getByText("Wallets total")).toBeVisible();
     await expect(page.getByText("$150.00", { exact: true })).toBeVisible();
   });
 

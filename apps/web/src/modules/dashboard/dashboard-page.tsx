@@ -5,17 +5,27 @@ import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useCreditCardsQuery } from "@/modules/credit-cards/hooks/use-credit-cards-query";
+import { useInvestmentsQuery } from "@/modules/investments/hooks/use-investments-query";
 import { useQuickAddTransaction } from "@/modules/transactions/components/quick-add-transaction-provider";
-import { NetWorthTotal } from "@/modules/wallets/components/net-worth-total";
 import { WalletEmptyState } from "@/modules/wallets/components/wallet-empty-state";
 import { useWalletsQuery } from "@/modules/wallets/hooks/use-wallets-query";
+import { NetWorthBreakdownChart } from "./components/net-worth-breakdown-chart";
+import { NetWorthSummary } from "./components/net-worth-summary";
 import { RecentTransactions } from "./components/recent-transactions";
 import { TopCategories } from "./components/top-categories";
-import { WalletBreakdownChart } from "./components/wallet-breakdown-chart";
+import { useNetWorth } from "./hooks/use-net-worth";
 
 export function DashboardPage() {
-  const { data: wallets, isPending } = useWalletsQuery();
+  const { data: wallets, isPending: walletsPending } = useWalletsQuery();
+  const { isPending: cardsPending } = useCreditCardsQuery();
+  const { data: investments, isPending: investmentsPending } =
+    useInvestmentsQuery();
+  const { netWorth, walletsTotal, investmentsTotal, cardsTotal } =
+    useNetWorth();
   const { open } = useQuickAddTransaction();
+
+  const isPending = walletsPending || cardsPending || investmentsPending;
 
   if (isPending) {
     return <Skeleton className="h-24 w-full" />;
@@ -47,7 +57,12 @@ export function DashboardPage() {
         <Card>
           <CardContent className="flex flex-col gap-4">
             <div className="flex items-start justify-between gap-2">
-              <NetWorthTotal wallets={wallets} />
+              <NetWorthSummary
+                netWorth={netWorth}
+                walletsTotal={walletsTotal}
+                investmentsTotal={investmentsTotal}
+                cardsTotal={cardsTotal}
+              />
               <Link
                 href="/wallets"
                 className={buttonVariants({ variant: "outline", size: "sm" })}
@@ -55,7 +70,10 @@ export function DashboardPage() {
                 Wallets
               </Link>
             </div>
-            <WalletBreakdownChart wallets={wallets} />
+            <NetWorthBreakdownChart
+              wallets={wallets}
+              investments={investments ?? []}
+            />
           </CardContent>
         </Card>
         <RecentTransactions />

@@ -26,8 +26,7 @@ Already covered by archived specs in `openspec/specs/`: monorepo/tooling skeleto
 | Order | Change slice | Module(s) | Why here |
 |---|---|---|---|
 | 1 | `investments-core` | api/web: `investments` | Manual holdings (symbol, quantity, cost basis) + manual valuation updates — deliberately shallow per non-goals (no live market data, no tax lots). |
-| 2 | `net-worth-aggregation` | web: dashboard | Roll wallets + cards + investments into one net-worth number/chart — natural checkpoint once all three domains exist. |
-| 3 | `spending-insights` | api/web: reporting (read-only queries, no new module expected) | Monthly trend analysis over time — a first-cut category breakdown (this month's top expense categories) already shipped in `dashboard-overview`; this row covers trend-over-time on top of it, plus a date-range picker. |
+| 2 | `spending-insights` | api/web: reporting (read-only queries, no new module expected) | Monthly trend analysis over time — a first-cut category breakdown (this month's top expense categories) already shipped in `dashboard-overview`; this row covers trend-over-time on top of it, plus a date-range picker. |
 
 ## Workflow per item
 

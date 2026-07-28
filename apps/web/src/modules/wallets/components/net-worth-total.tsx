@@ -6,7 +6,7 @@ export function NetWorthTotal({ wallets }: { wallets: WalletDto[] }) {
 
   return (
     <div>
-      <p className="text-sm text-muted-foreground">Net worth</p>
+      <p className="text-sm text-muted-foreground">Wallets total</p>
       <p className="text-3xl font-semibold">{formatCurrency(total)}</p>
     </div>
   );
